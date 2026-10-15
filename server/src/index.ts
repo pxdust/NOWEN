@@ -1,3 +1,4 @@
+import './processGuards.js'
 import express from 'express'
 import cors from 'cors'
 import { initDatabase } from './db.js'
@@ -51,6 +52,11 @@ app.use(cors({
 // JSON 解析
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
+
+// 存活探针：不访问书签、不抓外网。容器健康检查应打这里，而不是 /api/health-check。
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true })
+})
 
 // 全局请求频率限制
 app.use(generalLimiter)

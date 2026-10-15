@@ -102,8 +102,13 @@ async function decodeResponse(response: Response): Promise<string> {
 
   if (needsDecode) {
     const buffer = await response.arrayBuffer()
-    const decoder = new TextDecoder(charset || 'gbk')
-    return decoder.decode(buffer)
+    try {
+      return new TextDecoder(charset || 'gbk').decode(buffer)
+    } catch (err: any) {
+      // Alpine 等精简 ICU 环境不支持 gbk/big5，解析失败不能中断抓取
+      console.warn(`页面编码解析失败 (${charset || 'gbk'}):`, err?.message || err)
+      return new TextDecoder('utf-8').decode(buffer)
+    }
   }
 
   // 默认 UTF-8
@@ -147,16 +152,9 @@ async function fetchWithRetry(
       return response
     } catch (err: any) {
       clearTimeout(timer)
-      lastError = err
+      lastError = err instanceof Error ? err : new Error(String(err ?? 'fetch failed'))
 
-      // 被 abort 的不重试
-      if (err.name === 'AbortError' && i < retries) {
-        // 超时重试，增加等待时间
-        await new Promise(r => setTimeout(r, 500 * (i + 1)))
-        continue
-      }
-
-      // 网络错误重试
+      // 超时和网络错误都重试，重试耗尽后由调用方决定降级
       if (i < retries) {
         await new Promise(r => setTimeout(r, 500 * (i + 1)))
         continue
@@ -231,16 +229,23 @@ function findBestIcon($: cheerio.CheerioAPI): string | null {
 }
 
 export async function parseMetadata(url: string, lang?: string): Promise<Metadata> {
-  const urlObj = new URL(url)
-  const baseUrl = `${urlObj.protocol}//${urlObj.host}`
-
-  const defaultMetadata: Metadata = {
-    title: urlObj.hostname.replace('www.', ''),
+  // 非法 URL、连不上、HTML 解析失败都走这里返回，绝不把拒绝抛给进程。
+  let defaultMetadata: Metadata = {
+    title: url,
     description: '',
-    favicon: getFallbackFavicon(urlObj.hostname),
+    favicon: '',
   }
 
   try {
+    const urlObj = new URL(url)
+    const baseUrl = `${urlObj.protocol}//${urlObj.host}`
+
+    defaultMetadata = {
+      title: urlObj.hostname.replace('www.', ''),
+      description: '',
+      favicon: getFallbackFavicon(urlObj.hostname),
+    }
+
     const response = await fetchWithRetry(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',

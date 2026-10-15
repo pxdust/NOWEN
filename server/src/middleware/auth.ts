@@ -99,5 +99,11 @@ export function optionalAuthMiddleware(req: Request, res: Response, next: NextFu
   next()
 }
 
-// 定期清理过期 Token (每小时)
-setInterval(cleanExpiredTokens, 60 * 60 * 1000)
+// 定期清理过期 Token (每小时)。定时器里的异常不能把进程打退出。
+setInterval(() => {
+  try {
+    cleanExpiredTokens()
+  } catch (err) {
+    console.error('清理过期 Token 失败:', err)
+  }
+}, 60 * 60 * 1000)

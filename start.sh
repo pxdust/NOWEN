@@ -328,6 +328,7 @@ start_safe_backup_daemon() {
 # 第四步：优雅停止时保存
 # ============================================================
 graceful_shutdown() {
+  SHUTTING_DOWN=1
   echo ""
   echo "🛑 Shutting down NOWEN..."
   
@@ -352,7 +353,8 @@ graceful_shutdown() {
   exit 0
 }
 
-# 注册信号处理
+# 注册信号处理。远程抓取失败不能走到这里，只有真正的停止信号才关闭容器。
+SHUTTING_DOWN=0
 trap graceful_shutdown SIGTERM SIGINT
 
 # ============================================================
@@ -376,10 +378,20 @@ echo ""
 # 启动安全备份守护进程
 start_safe_backup_daemon
 
+start_backend() {
+  # exec 让 BACKEND_PID 就是 tsx，而不是多包一层会提前退出的 shell
+  (cd /app/server && exec tsx src/index.ts) &
+  BACKEND_PID=$!
+}
+
+start_nginx() {
+  nginx -g "daemon off;" &
+  NGINX_PID=$!
+}
+
 # 启动后端
 echo "Starting backend on port 3001..."
-cd /app/server && tsx src/index.ts &
-BACKEND_PID=$!
+start_backend
 sleep 2
 
 # 启动后再次同步（initDatabase 可能创建了新库）
@@ -389,8 +401,26 @@ fi
 
 # 启动 nginx（前台运行）
 echo "Starting nginx on port 3000..."
-nginx -g "daemon off;" &
-NGINX_PID=$!
+start_nginx
 
-# 等待任意子进程退出
-wait ${NGINX_PID} ${BACKEND_PID}
+# 子进程退出时拉起，而不是结束 PID 1。
+# 书签图标/健康检查抓取失败不能让容器退出；只有 SIGTERM/SIGINT 才停止。
+while [ "${SHUTTING_DOWN}" -eq 0 ]; do
+  if ! kill -0 "${BACKEND_PID}" 2>/dev/null; then
+    echo "⚠️ Backend exited unexpectedly; restarting so NOWEN keeps serving"
+    sleep 1
+    if [ "${SHUTTING_DOWN}" -eq 0 ]; then
+      start_backend
+    fi
+  fi
+  if [ "${SHUTTING_DOWN}" -eq 0 ] && ! kill -0 "${NGINX_PID}" 2>/dev/null; then
+    echo "⚠️ Nginx exited unexpectedly; restarting"
+    sleep 1
+    if [ "${SHUTTING_DOWN}" -eq 0 ]; then
+      start_nginx
+    fi
+  fi
+  # 可被信号打断的睡眠，避免 docker stop 要干等整段间隔
+  sleep 2 &
+  wait $! || true
+done
