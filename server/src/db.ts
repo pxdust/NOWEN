@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs';
+import { setEmergencySave } from './processGuards.js'
 
 // 🔑 自动检测是否在 Docker 容器内运行
 // 即使用户忘记设置 NODE_ENV=production（NAS GUI 部署常见），也能自动识别
@@ -542,6 +543,10 @@ function startAutoSave() {
 
 /** 注册进程退出钩子，确保退出前保存数据 */
 function registerShutdownHooks() {
+  setEmergencySave(() => {
+    if (db) saveDatabase()
+  })
+
   const gracefulShutdown = (signal: string) => {
     console.log(`\n🛑 Received ${signal}, saving database before exit...`)
     try {
@@ -558,20 +563,6 @@ function registerShutdownHooks() {
   // 只注册一次
   process.once('SIGINT', () => gracefulShutdown('SIGINT'))
   process.once('SIGTERM', () => gracefulShutdown('SIGTERM'))
-  
-  // 未捕获的异常也尝试保存
-  process.once('uncaughtException', (err) => {
-    console.error('💥 Uncaught exception:', err)
-    try {
-      if (db) {
-        saveDatabase()
-        console.log('✅ Emergency database save completed')
-      }
-    } catch (saveErr) {
-      console.error('❌ Emergency save failed:', saveErr)
-    }
-    process.exit(1)
-  })
 }
 
 // 生成唯一 ID（使用 crypto.randomUUID 确保无碰撞风险）
