@@ -116,6 +116,7 @@
   },
   "monitor": {
     "title": "시스템 모니터",
+    "section": "시스템",
     "engine_room": "엔진룸",
     "hardware_identity": "하드웨어 ID",
     "vital_signs": "바이탈 사인",
@@ -210,7 +211,10 @@
       "about": "소개",
       "about_full": "프로젝트 소개",
       "settings": "설정",
-      "settings_full": "시스템 설정"
+      "settings_full": "시스템 설정",
+      "group_content": "콘텐츠",
+      "group_observe": "관찰",
+      "group_system": "시스템"
     },
     "stats": {
       "total_bookmarks": "북마크 {{count}}개",

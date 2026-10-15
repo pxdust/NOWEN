@@ -116,6 +116,7 @@
   },
   "monitor": {
     "title": "システムモニター",
+    "section": "システム",
     "engine_room": "エンジンルーム",
     "hardware_identity": "ハードウェアID",
     "vital_signs": "バイタルサイン",
@@ -210,7 +211,10 @@
       "about": "について",
       "about_full": "プロジェクトについて",
       "settings": "設定",
-      "settings_full": "システム設定"
+      "settings_full": "システム設定",
+      "group_content": "コンテンツ",
+      "group_observe": "観察",
+      "group_system": "システム"
     },
     "stats": {
       "total_bookmarks": "ブックマーク {{count}} 件",

@@ -1146,6 +1146,7 @@ function AdminContent() {
     logs: t('admin.nav.logs_full'),
     backup: t('admin.nav.backup_full'),
     docs: t('admin.nav.docs_full'),
+    about: t('admin.nav.about_full'),
     settings: t('admin.nav.settings_full'),
   }
 
@@ -1182,7 +1183,7 @@ function AdminContent() {
           <motion.header 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-10"
+            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
           >
             <div>
               <h1 
@@ -1299,7 +1300,7 @@ function AdminContent() {
                       title={t('admin.bookmark.detect_duplicates')}
                     >
                       <Copy className="w-4 h-4" />
-                      <span className="hidden lg:inline">{t('admin.bookmark.detect_duplicates')}</span>
+                      <span className="inline">{t('admin.bookmark.detect_duplicates')}</span>
                     </motion.button>
                     <motion.button
                       onClick={detectSameDomain}
@@ -1314,7 +1315,7 @@ function AdminContent() {
                       title={t('admin.bookmark.detect_same_domain')}
                     >
                       <Globe className="w-4 h-4" />
-                      <span className="hidden lg:inline">{t('admin.bookmark.detect_same_domain')}</span>
+                      <span className="inline">{t('admin.bookmark.detect_same_domain')}</span>
                     </motion.button>
                   </div>
                 </div>
@@ -1436,7 +1437,7 @@ function AdminContent() {
                           }}
                         >
                           <Sparkles className={cn('w-4 h-4', isAiTagging && 'animate-pulse')} />
-                          <span className="hidden lg:inline">
+                          <span className="inline">
                             {isAiTagging ? t('admin.bookmark.batch_ai_tags_loading') : t('admin.bookmark.batch_ai_tags')}
                           </span>
                         </motion.button>
@@ -1477,7 +1478,7 @@ function AdminContent() {
                           }}
                         >
                           <Wand2 className={cn('w-4 h-4', isAiClassifying && 'animate-pulse')} />
-                          <span className="hidden lg:inline">
+                          <span className="inline">
                             {isAiClassifying ? t('admin.bookmark.batch_ai_classify_loading') : t('admin.bookmark.batch_ai_classify')}
                           </span>
                         </motion.button>
@@ -1517,7 +1518,7 @@ function AdminContent() {
                           }}
                         >
                           <BrainCircuit className={cn('w-4 h-4', isAiEnriching && 'animate-pulse')} />
-                          <span className="hidden lg:inline">
+                          <span className="inline">
                             {isAiEnriching ? t('admin.bookmark.batch_ai_enrich_loading') : t('admin.bookmark.batch_ai_enrich')}
                           </span>
                         </motion.button>

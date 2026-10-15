@@ -118,6 +118,7 @@
   },
   "monitor": {
     "title": "系统监控",
+    "section": "系统",
     "engine_room": "引擎室",
     "hardware_identity": "硬件身份卡",
     "vital_signs": "核心脉搏",
@@ -212,7 +213,10 @@
       "about": "关于",
       "about_full": "关于项目",
       "settings": "设置",
-      "settings_full": "系统设置"
+      "settings_full": "系统设置",
+      "group_content": "内容",
+      "group_observe": "观察",
+      "group_system": "系统"
     },
     "stats": {
       "total_bookmarks": "共 {{count}} 个书签",

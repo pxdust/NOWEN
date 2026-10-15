@@ -7,5 +7,6 @@ export { HeroSection } from './HeroSection';
 export { ReadLaterHero } from './ReadLaterHero';
 export { ReadLaterSection } from './ReadLaterSection';
 export { EmptyState } from './EmptyState';
+export { SystemWidgetsSection } from './SystemWidgetsSection';
 export { BookmarkDragOverlay } from './BookmarkDragOverlay';
 export { QuickNotes } from './QuickNotes';

@@ -22,11 +22,20 @@ interface DockItem {
   subItems?: DockItem[];
 }
 
+interface DockLeadingAction {
+  label: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  onClick: () => void;
+  active?: boolean;
+}
+
 interface MobileFloatingDockProps {
   items: DockItem[];
   className?: string;
   /** 左侧插槽，用于放置状态栏等 */
   leftSlot?: React.ReactNode;
+  /** 能量球左侧的底栏按钮，例如内容导航 */
+  leadingAction?: DockLeadingAction;
 }
 
 // 液态动画配置
@@ -40,6 +49,7 @@ export function MobileFloatingDock({
   items,
   className,
   leftSlot,
+  leadingAction,
 }: MobileFloatingDockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   // 当前展示的子菜单项，null 表示在主菜单
@@ -265,8 +275,26 @@ export function MobileFloatingDock({
           <div className="flex-1 min-w-0 mr-3 overflow-hidden">{leftSlot}</div>
         )}
 
-        {/* 右侧：能量球按钮 */}
-        <div className="relative flex-shrink-0">
+        {/* 右侧：内容导航 + 能量球 */}
+        <div className="relative flex flex-shrink-0 items-center gap-2">
+          {leadingAction && (
+            <button
+              type="button"
+              aria-label={leadingAction.label}
+              onClick={leadingAction.onClick}
+              className={cn(
+                "relative flex h-11 w-11 items-center justify-center rounded-full",
+                "border border-slate-200/80 bg-white/95 backdrop-blur-xl",
+                "dark:border-white/10 dark:bg-black/80",
+                "active:scale-90"
+              )}
+              style={{
+                color: leadingAction.active ? "rgb(34, 211, 238)" : undefined,
+              }}
+            >
+              <leadingAction.icon className="h-5 w-5 text-slate-600 dark:text-white/80" />
+            </button>
+          )}
           <motion.button
             ref={orbBtnRef}
             onClick={toggleDock}
