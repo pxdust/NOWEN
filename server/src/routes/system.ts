@@ -15,6 +15,7 @@
 import { Router } from 'express'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import os from 'os'
 import si from 'systeminformation'
 
 const execAsync = promisify(exec)
@@ -113,9 +114,138 @@ interface CacheEntry<T> {
 let staticCache: CacheEntry<StaticSystemInfo> = { data: null, timestamp: 0 }
 const STATIC_CACHE_TTL = 3600000 // 1小时
 
-// 热数据缓存 - 短期有效（2秒）
+// 热数据缓存 - 短期有效。多个卡片同时打过来时合并成一次采集。
 let dynamicCache: CacheEntry<DynamicSystemInfo> = { data: null, timestamp: 0 }
-const DYNAMIC_CACHE_TTL = 2000 // 2秒
+const DYNAMIC_CACHE_TTL = 4000
+
+// ============================================
+// 慢采集与快采集分开缓存
+// df / 温度 / docker / 网卡详情在低功耗主机上会 fork 或阻塞事件循环，
+// 不需要跟 CPU、内存一样每几秒重做一遍。
+// ============================================
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    let settled = false
+    const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
+      resolve(fallback)
+    }, ms)
+    promise.then(
+      (value) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        resolve(value)
+      },
+      () => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        resolve(fallback)
+      },
+    )
+  })
+}
+
+function createCached<T>(loader: () => Promise<T>, ttlMs: number) {
+  let cache: { data: T; at: number } | null = null
+  let inflight: Promise<T> | null = null
+  return () => {
+    const now = Date.now()
+    if (cache && now - cache.at < ttlMs) return Promise.resolve(cache.data)
+    if (inflight) return inflight
+    inflight = loader()
+      .then((data) => {
+        cache = { data, at: Date.now() }
+        return data
+      })
+      .finally(() => {
+        inflight = null
+      })
+    return inflight
+  }
+}
+
+type FastVitals = {
+  load: Awaited<ReturnType<typeof si.currentLoad>>
+  mem: Awaited<ReturnType<typeof si.mem>>
+  network: Awaited<ReturnType<typeof si.networkStats>>
+  uptime: number
+}
+
+const getFsSize = createCached(() => si.fsSize(), 30_000)
+const getCpuTemperature = createCached(
+  () => si.cpuTemperature().catch(() => ({ main: null, max: null, cores: [] as number[] })),
+  15_000,
+)
+const getNetworkInterfaces = createCached(() => si.networkInterfaces(), 30_000)
+const getFastVitals = createCached(async (): Promise<FastVitals> => {
+  const [load, mem, network] = await Promise.all([
+    si.currentLoad(),
+    si.mem(),
+    si.networkStats(),
+  ])
+  // os.uptime() 与 systeminformation 的 time().uptime 相同，但不执行 date/ls。
+  return { load, mem, network, uptime: os.uptime() }
+}, 2_000)
+
+let dockerInfoCache: { data: Awaited<ReturnType<typeof si.dockerInfo>> | null; at: number } | null = null
+let dockerInfoInflight: Promise<Awaited<ReturnType<typeof si.dockerInfo>> | null> | null = null
+const DOCKER_INFO_TTL = 30_000
+
+function getDockerInfo() {
+  const now = Date.now()
+  if (dockerInfoCache && now - dockerInfoCache.at < DOCKER_INFO_TTL) {
+    return Promise.resolve(dockerInfoCache.data)
+  }
+  if (dockerInfoInflight) return dockerInfoInflight
+  dockerInfoInflight = withTimeout(si.dockerInfo().catch(() => null), 1200, null)
+    .then((info) => {
+      dockerInfoCache = { data: info, at: Date.now() }
+      return info
+    })
+    .finally(() => {
+      dockerInfoInflight = null
+    })
+  return dockerInfoInflight
+}
+
+let dockerCliCache: { data: { running: number; paused: number; stopped: number; total: number } | null; at: number } | null = null
+let dockerCliInflight: Promise<{ running: number; paused: number; stopped: number; total: number } | null> | null = null
+
+function getDockerCliSummary() {
+  const now = Date.now()
+  if (dockerCliCache && now - dockerCliCache.at < 60_000) return Promise.resolve(dockerCliCache.data)
+  if (dockerCliInflight) return dockerCliInflight
+  dockerCliInflight = execAsync('docker ps -a --format "{{.State}}"', { timeout: 1500 })
+    .then(({ stdout }) => {
+      if (!stdout.trim()) {
+        dockerCliCache = { data: null, at: Date.now() }
+        return null
+      }
+      const states = stdout.trim().split('\n')
+      const running = states.filter((s) => s === 'running').length
+      const paused = states.filter((s) => s === 'paused').length
+      const summary = {
+        running,
+        paused,
+        stopped: states.length - running - paused,
+        total: states.length,
+      }
+      dockerCliCache = { data: summary, at: Date.now() }
+      return summary
+    })
+    .catch(() => {
+      dockerCliCache = { data: null, at: Date.now() }
+      return null
+    })
+    .finally(() => {
+      dockerCliInflight = null
+    })
+  return dockerCliInflight
+}
 
 // 简化指标缓存（兼容旧版）
 let statsCache: CacheEntry<SystemStats> = { data: null, timestamp: 0 }
@@ -285,12 +415,13 @@ router.get('/stats', async (_req, res) => {
       })
     }
 
-    const [cpuLoad, mem, disk, time] = await Promise.all([
-      si.currentLoad(),
-      si.mem(),
-      si.fsSize(),
-      si.time(),
+    const [vitals, disk] = await Promise.all([
+      getFastVitals(),
+      getFsSize(),
     ])
+    const cpuLoad = vitals.load
+    const mem = vitals.mem
+    const time = { uptime: vitals.uptime }
 
     const diskPrefix = process.env.SI_FILESYSTEM_DISK_PREFIX || ''
     const targetDisk = disk.find((d) => d.mount === `${diskPrefix}/`) 
@@ -476,15 +607,16 @@ router.get('/dynamic', async (_req, res) => {
     }
 
     // 并发获取所有实时数据
-    const [load, temp, mem, network, fs, docker, time] = await Promise.all([
-      si.currentLoad(),
-      si.cpuTemperature().catch(() => ({ main: null, max: null, cores: [] })),
-      si.mem(),
-      si.networkStats(),
-      si.fsSize(),
-      si.dockerInfo().catch(() => null),
-      si.time(),
+    const [vitals, temp, fs, docker] = await Promise.all([
+      getFastVitals(),
+      getCpuTemperature(),
+      getFsSize(),
+      getDockerInfo(),
     ])
+    const load = vitals.load
+    const mem = vitals.mem
+    const network = vitals.network
+    const time = { uptime: vitals.uptime }
 
     // 过滤掉虚拟网络接口
     const physicalNetworks = network.filter(n => 
@@ -495,7 +627,7 @@ router.get('/dynamic', async (_req, res) => {
     )
 
     // 获取网络接口详细信息（包括 IP 地址）
-    const networkInterfaces = await si.networkInterfaces()
+    const networkInterfaces = await getNetworkInterfaces()
     const interfaceMap = new Map<string, { ip4: string; ip6: string }>()
     for (const iface of networkInterfaces) {
       if (iface.ip4 || iface.ip6) {
@@ -533,22 +665,14 @@ router.get('/dynamic', async (_req, res) => {
         containers: docker.containers || 0,
       }
     } else {
-      // CLI fallback：通过 docker 命令获取容器统计
-      try {
-        const { stdout } = await execAsync('docker ps -a --format "{{.State}}"', { timeout: 5000 })
-        if (stdout.trim()) {
-          const states = stdout.trim().split('\n')
-          const running = states.filter(s => s === 'running').length
-          const paused = states.filter(s => s === 'paused').length
-          dockerData = {
-            running,
-            paused,
-            stopped: states.length - running - paused,
-            containers: states.length,
-          }
+      const cli = await getDockerCliSummary()
+      if (cli) {
+        dockerData = {
+          running: cli.running,
+          paused: cli.paused,
+          stopped: cli.stopped,
+          containers: cli.total,
         }
-      } catch {
-        // Docker 不可用，保持 null
       }
     }
 
@@ -682,9 +806,9 @@ interface PulseData {
   timestamp: number
 }
 
-// Pulse 缓存 - 2秒有效
+// Pulse 缓存。客户端约 5 秒拉一次，这里挡住同一窗口里的重复请求。
 let pulseCache: CacheEntry<PulseData> = { data: null, timestamp: 0 }
-const PULSE_CACHE_TTL = 2000
+const PULSE_CACHE_TTL = 4000
 
 router.get('/pulse', async (_req, res) => {
   try {
@@ -700,15 +824,16 @@ router.get('/pulse', async (_req, res) => {
     }
 
     // 并发获取核心数据
-    const [load, temp, mem, network, fs, docker, time] = await Promise.all([
-      si.currentLoad(),
-      si.cpuTemperature().catch(() => ({ main: null })),
-      si.mem(),
-      si.networkStats(),
-      si.fsSize(),
-      si.dockerInfo().catch(() => null),
-      si.time(),
+    const [vitals, temp, fs, docker] = await Promise.all([
+      getFastVitals(),
+      getCpuTemperature(),
+      getFsSize(),
+      getDockerInfo(),
     ])
+    const load = vitals.load
+    const mem = vitals.mem
+    const network = vitals.network
+    const time = { uptime: vitals.uptime }
 
     // 获取主磁盘
     const diskPrefix = process.env.SI_FILESYSTEM_DISK_PREFIX || ''
@@ -887,19 +1012,13 @@ router.get('/pulse', async (_req, res) => {
       timestamp: now,
     }
 
-    // Docker CLI fallback：如果 si.dockerInfo 失败，尝试 CLI
     if (!pulseData.containers) {
-      try {
-        const { stdout } = await execAsync('docker ps -a --format "{{.State}}"', { timeout: 5000 })
-        if (stdout.trim()) {
-          const states = stdout.trim().split('\n')
-          pulseData.containers = {
-            running: states.filter(s => s === 'running').length,
-            total: states.length,
-          }
+      const cli = await getDockerCliSummary()
+      if (cli) {
+        pulseData.containers = {
+          running: cli.running,
+          total: cli.total,
         }
-      } catch {
-        // Docker 不可用
       }
     }
 
@@ -947,7 +1066,7 @@ interface DockerContainer {
 
 // Docker 容器缓存
 let dockerContainersCache: CacheEntry<DockerContainer[]> = { data: null, timestamp: 0 }
-const DOCKER_CACHE_TTL = 5000 // 5秒
+const DOCKER_CACHE_TTL = 15000
 
 /**
  * 通过 docker CLI 获取容器列表（作为 systeminformation 的 fallback）
@@ -958,7 +1077,7 @@ async function getDockerContainersViaCli(): Promise<DockerContainer[]> {
     // 使用 docker ps -a 获取所有容器（JSON 格式）
     const { stdout } = await execAsync(
       'docker ps -a --format "{{.ID}}|{{.Names}}|{{.Image}}|{{.State}}|{{.Status}}|{{.CreatedAt}}"',
-      { timeout: 10000 }
+      { timeout: 2000 }
     )
     
     if (!stdout.trim()) {
@@ -1003,7 +1122,6 @@ router.get('/docker', async (_req, res) => {
     // 如果 systeminformation 返回空，尝试通过 docker CLI 获取
     // 这对于绿联/飞牛 OS 等 NAS 系统的嵌套 Docker 场景更可靠
     if (containers.length === 0) {
-      console.log('[Docker] systeminformation returned empty, trying docker CLI fallback...')
       const cliContainers = await getDockerContainersViaCli()
       if (cliContainers.length > 0) {
         console.log(`[Docker] CLI fallback found ${cliContainers.length} containers`)

@@ -442,7 +442,7 @@ export function VitalSignsCard({ className, forceCollapsed }: { className?: stri
   const { data, error, isLoading } = useSWR<DynamicSystemInfo>(
     '/api/system/dynamic',
     fetcher,
-    { refreshInterval: 3000, revalidateOnFocus: false }
+    { refreshInterval: 5000, revalidateOnFocus: false, dedupingInterval: 4000 }
   )
 
   // 累积历史数据

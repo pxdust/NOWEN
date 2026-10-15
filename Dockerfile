@@ -7,11 +7,32 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
+# 国内构建可传 --build-arg NPM_REGISTRY=https://registry.npmmirror.com
+ARG NPM_REGISTRY=
 # 前端已移除 bcrypt 等 native 模块，无需编译工具链
 COPY package*.json ./
-RUN npm install
+RUN if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi \
+ && npm ci \
+ && npm cache clean --force
 COPY . .
-RUN npm run build
+RUN npm run build \
+ && find dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.svg' -o -name '*.html' \) -exec sh -c 'gzip -9 -c "$1" > "$1.gz" && touch -r "$1" "$1.gz"' _ {} \; \
+ && rm -rf dist/screenshots
+
+# 后端编译成 JS，生产镜像不再带 tsx / TypeScript
+FROM node:20-alpine AS server-builder
+WORKDIR /server
+ARG NPM_REGISTRY=
+COPY server/package*.json ./
+RUN if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi \
+ && npm ci \
+ && npm cache clean --force
+COPY server/tsconfig.json ./
+COPY server/src ./src
+# 存量类型错误不阻止产出 JS（运行时原本就由 tsx 忽略类型）。
+RUN (npx tsc --pretty false || test -f dist/index.js) \
+ && npm prune --omit=dev \
+ && npm cache clean --force
 
 # Production stage
 FROM node:20-alpine AS production
@@ -35,17 +56,10 @@ RUN echo "https://dl-cdn.alpinelinux.org/alpine/v$(cut -d. -f1,2 /etc/alpine-rel
     # docker-cli 为可选依赖（仅用于系统监控 fallback），安装失败不阻断构建
     (apk add --no-cache docker-cli || echo "⚠️ docker-cli not available, skipping (optional)")
 
-# Install production dependencies for backend
-# server 使用 bcryptjs（纯 JS）而非 bcrypt，无需编译工具
-COPY server/package*.json ./server/
-RUN cd server && npm install --omit=dev
-
-# Install tsx globally
-RUN npm install -g tsx
-
-# Copy backend source
-COPY server/src ./server/src
-COPY server/tsconfig.json ./server/
+# 只拷贝编译结果和生产依赖。sql.js 的 wasm 在 node_modules 里，按包路径加载。
+COPY --from=server-builder /server/package.json ./server/package.json
+COPY --from=server-builder /server/node_modules ./server/node_modules
+COPY --from=server-builder /server/dist ./server/dist
 
 # Copy built frontend
 COPY --from=frontend-builder /app/dist ./dist

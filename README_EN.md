@@ -727,8 +727,7 @@ A: This fork does not use a published Hub image. Build on the device with `docke
 A: ARM64 native module compilation is slower than x86. RK3588 takes about 3-5 minutes, RK3566 about 8-15 minutes. Use a China npm mirror for acceleration:
 
 ```bash
-# Add before npm install in Dockerfile
-RUN npm config set registry https://registry.npmmirror.com
+docker build --build-arg NPM_REGISTRY=https://registry.npmmirror.com -t nowen:local .
 ```
 
 **Q: System monitoring can't read CPU temperature?**

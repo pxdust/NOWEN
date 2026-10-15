@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { DndContext, closestCorners } from "@dnd-kit/core";
@@ -29,18 +29,26 @@ import { FloatingDock } from "./components/ui/floating-dock";
 import { MobileFloatingDock } from "./components/ui/mobile-floating-dock";
 import { MobileContentNavigation } from "./components/ui/mobile-content-navigation";
 import { SpotlightSearch } from "./components/ui/spotlight-search";
-import { AiAssistant } from "./components/ui/ai-assistant";
+const AiAssistant = lazy(() =>
+  import("./components/ui/ai-assistant").then((m) => ({ default: m.AiAssistant }))
+);
 import { Meteors } from "./components/ui/effects";
 import { BreathingDot } from "./components/ui/advanced-effects";
 import { ScrollToTop } from "./components/ui/scroll-to-top";
 import { SidebarNav } from "./components/ui/sidebar-nav";
 
 // 业务组件
-import { AddBookmarkModal } from "./components/AddBookmarkModal";
 import { BookmarkCardContent } from "./components/BookmarkCardContent";
 import { ContextMenu, useBookmarkContextMenu } from "./components/ContextMenu";
-import { IconManager } from "./components/IconManager";
-import { CategoryEditModal } from "./components/CategoryEditModal";
+const AddBookmarkModal = lazy(() =>
+  import("./components/AddBookmarkModal").then((m) => ({ default: m.AddBookmarkModal }))
+);
+const IconManager = lazy(() =>
+  import("./components/IconManager").then((m) => ({ default: m.IconManager }))
+);
+const CategoryEditModal = lazy(() =>
+  import("./components/CategoryEditModal").then((m) => ({ default: m.CategoryEditModal }))
+);
 
 // 首页子组件
 import {
@@ -58,22 +66,32 @@ import { QuickNotesProvider } from "./hooks/QuickNotesContext";
 import { CloudDrawerProvider } from "./hooks/CloudDrawerContext";
 
 // 监控组件
-import { SystemMonitorCard } from "./components/SystemMonitorCard";
-import { HardwareIdentityCard } from "./components/HardwareIdentityCard";
-import { VitalSignsCard } from "./components/VitalSignsCard";
-import { NetworkTelemetryCard } from "./components/NetworkTelemetryCard";
-import { ProcessMatrixCard } from "./components/ProcessMatrixCard";
-import { SystemMonitor } from "./components/monitor";
+const loadMonitors = () => import("./components/monitorBundle");
+const SystemMonitorCard = lazy(() => loadMonitors().then((m) => ({ default: m.SystemMonitorCard })));
+const HardwareIdentityCard = lazy(() => loadMonitors().then((m) => ({ default: m.HardwareIdentityCard })));
+const VitalSignsCard = lazy(() => loadMonitors().then((m) => ({ default: m.VitalSignsCard })));
+const NetworkTelemetryCard = lazy(() => loadMonitors().then((m) => ({ default: m.NetworkTelemetryCard })));
+const ProcessMatrixCard = lazy(() => loadMonitors().then((m) => ({ default: m.ProcessMatrixCard })));
+const SystemMonitor = lazy(() => loadMonitors().then((m) => ({ default: m.SystemMonitor })));
 
-// 页面组件
-import { Admin } from "./pages/Admin";
-import { AdminLogin } from "./components/AdminLogin";
-import { ForcePasswordChange } from "./components/ForcePasswordChange";
+// 页面组件。后台和登录不在首屏路径上。
+const Admin = lazy(() => import("./pages/Admin").then((m) => ({ default: m.Admin })));
+const AdminLogin = lazy(() =>
+  import("./components/AdminLogin").then((m) => ({ default: m.AdminLogin }))
+);
+const ForcePasswordChange = lazy(() =>
+  import("./components/ForcePasswordChange").then((m) => ({ default: m.ForcePasswordChange }))
+);
+
+function useRetain(active: boolean) {
+  const [retained, setRetained] = useState(active);
+  if (active && !retained) setRetained(true);
+  return retained;
+}
 
 // Hooks
 import { useBookmarkStore } from "./hooks/useBookmarkStore";
 import { useThemeContext } from "./hooks/useTheme";
-import { useTime } from "./hooks/useTime";
 import { useWeather } from "./hooks/useWeather";
 import { useSiteSettings } from "./hooks/useSiteSettings";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
@@ -126,6 +144,10 @@ function App() {
   const [activeTag, setActiveTag] = useState<string | null>(() =>
     typeof window === 'undefined' ? null : getTagFromSearch(window.location.search)
   );
+  const retainBookmarkModal = useRetain(isAddModalOpen);
+  const retainIconManager = useRetain(isIconManagerOpen);
+  const retainCategoryModal = useRetain(isCategoryModalOpen);
+  const retainAi = useRetain(isAiAssistantOpen);
 
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<{
@@ -135,7 +157,6 @@ function App() {
   }>({ isOpen: false, position: { x: 0, y: 0 }, bookmark: null });
 
   // ========== 自定义 Hooks ==========
-  const { greeting, formattedTime, formattedDate, lunarDate } = useTime();
   const { isDark, toggleDarkMode } = useThemeContext();
   const { t, i18n } = useTranslation();
   const { isInternal } = useNetworkEnv();
@@ -519,11 +540,13 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
   // 后台登录页面
   if (currentPage === "admin-login") {
     return (
-      <AdminLogin
-        onLogin={handleAdminLogin}
-        onBack={() => setCurrentPage("home")}
-        isDark={isDark}
-      />
+      <Suspense fallback={null}>
+        <AdminLogin
+          onLogin={handleAdminLogin}
+          onBack={() => setCurrentPage("home")}
+          isDark={isDark}
+        />
+      </Suspense>
     );
   }
 
@@ -534,11 +557,13 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       return null;
     }
     return (
-      <ForcePasswordChange
-        username={adminUsername}
-        onSuccess={handlePasswordChangeSuccess}
-        onLogout={handleAdminLogout}
-      />
+      <Suspense fallback={null}>
+        <ForcePasswordChange
+          username={adminUsername}
+          onSuccess={handlePasswordChangeSuccess}
+          onLogout={handleAdminLogout}
+        />
+      </Suspense>
     );
   }
 
@@ -550,6 +575,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
     }
     return (
       <>
+        <Suspense fallback={null}>
         <Admin
           bookmarks={bookmarks}
           categories={categories}
@@ -578,30 +604,39 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           onQuotesUpdate={handleQuotesChange}
           onSettingsChange={setSiteSettings}
         />
-        <AddBookmarkModal
-          isOpen={isAddModalOpen}
-          onClose={() => {
-            setIsAddModalOpen(false);
-            setEditingBookmark(null);
-            setPendingUrl("");
-          }}
-          onAdd={handleSaveBookmark}
-          categories={categories}
-          customIcons={customIcons}
-          initialUrl={pendingUrl}
-          editBookmark={editingBookmark}
-          onOpenIconManager={() => setIsIconManagerOpen(true)}
-          onCategoryAdded={(newCategory) => appendCategory(newCategory)}
-          enableAutoAi={enableAutoAi}
-          defaultVisibility={defaultBookmarkVisibility}
-        />
-        <IconManager
-          isOpen={isIconManagerOpen}
-          onClose={() => setIsIconManagerOpen(false)}
-          customIcons={customIcons}
-          onAddIcon={addCustomIcon}
-          onDeleteIcon={deleteCustomIcon}
-        />
+        </Suspense>
+        {retainBookmarkModal && (
+          <Suspense fallback={null}>
+            <AddBookmarkModal
+              isOpen={isAddModalOpen}
+              onClose={() => {
+                setIsAddModalOpen(false);
+                setEditingBookmark(null);
+                setPendingUrl("");
+              }}
+              onAdd={handleSaveBookmark}
+              categories={categories}
+              customIcons={customIcons}
+              initialUrl={pendingUrl}
+              editBookmark={editingBookmark}
+              onOpenIconManager={() => setIsIconManagerOpen(true)}
+              onCategoryAdded={(newCategory) => appendCategory(newCategory)}
+              enableAutoAi={enableAutoAi}
+              defaultVisibility={defaultBookmarkVisibility}
+            />
+          </Suspense>
+        )}
+        {retainIconManager && (
+          <Suspense fallback={null}>
+            <IconManager
+              isOpen={isIconManagerOpen}
+              onClose={() => setIsIconManagerOpen(false)}
+              customIcons={customIcons}
+              onAddIcon={addCustomIcon}
+              onDeleteIcon={deleteCustomIcon}
+            />
+          </Suspense>
+        )}
       </>
     );
   }
@@ -773,13 +808,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
         <div className="max-w-6xl mx-auto">
           {/* Hero Section */}
           <HeroSection
-            formattedTime={formattedTime}
-            formattedDate={formattedDate}
-            lunarDate={lunarDate}
-            greeting={greeting}
             isLiteMode={isLiteMode}
             showWeather={showWeather}
-            showLunar={showLunar}
+            showLunar={settingsLoaded && !!showLunar}
             showSearch={showSearch}
             weather={weather}
             weatherLoading={weatherLoading}
@@ -865,27 +896,37 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                 {/* System Monitor Cards */}
                 {effectiveWidgetVisibility.systemMonitor !== false && (
                   <BentoGridItem key="system-monitor" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.15)"} delay={0}>
-                    <SystemMonitorCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <SystemMonitorCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.hardwareIdentity !== false && (
                   <BentoGridItem key="hardware-specs" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.1)"} delay={0.1}>
-                    <HardwareIdentityCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <HardwareIdentityCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.vitalSigns !== false && (
                   <BentoGridItem key="vital-signs" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.12)"} delay={0.15}>
-                    <VitalSignsCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <VitalSignsCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.networkTelemetry !== false && (
                   <BentoGridItem key="network-telemetry" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(168, 85, 247, 0.12)"} delay={0.2}>
-                    <NetworkTelemetryCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <NetworkTelemetryCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.processMatrix !== false && (
                   <BentoGridItem key="process-matrix" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(34, 197, 94, 0.12)"} delay={0.25}>
-                    <ProcessMatrixCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <ProcessMatrixCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
 
@@ -929,27 +970,37 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
               <BentoGrid>
                 {effectiveWidgetVisibility.systemMonitor !== false && (
                   <BentoGridItem key="system-monitor-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.15)"} delay={0}>
-                    <SystemMonitorCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <SystemMonitorCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.hardwareIdentity !== false && (
                   <BentoGridItem key="hardware-specs-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.1)"} delay={0.1}>
-                    <HardwareIdentityCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <HardwareIdentityCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.vitalSigns !== false && (
                   <BentoGridItem key="vital-signs-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.12)"} delay={0.15}>
-                    <VitalSignsCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <VitalSignsCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.networkTelemetry !== false && (
                   <BentoGridItem key="network-telemetry-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(168, 85, 247, 0.12)"} delay={0.2}>
-                    <NetworkTelemetryCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <NetworkTelemetryCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
                 {effectiveWidgetVisibility.processMatrix !== false && (
                   <BentoGridItem key="process-matrix-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(34, 197, 94, 0.12)"} delay={0.25}>
-                    <ProcessMatrixCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    <Suspense fallback={null}>
+                      <ProcessMatrixCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
+                    </Suspense>
                   </BentoGridItem>
                 )}
               </BentoGrid>
@@ -1041,51 +1092,65 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
         />
       )}
 
-      {isLoggedIn && effectiveWidgetVisibility.aiAssistant !== false && (
-        <AiAssistant
-          isOpen={isAiAssistantOpen}
-          onClose={() => setIsAiAssistantOpen(false)}
-        />
+      {retainAi && isLoggedIn && effectiveWidgetVisibility.aiAssistant !== false && (
+        <Suspense fallback={null}>
+          <AiAssistant
+            isOpen={isAiAssistantOpen}
+            onClose={() => setIsAiAssistantOpen(false)}
+          />
+        </Suspense>
       )}
 
-      <AddBookmarkModal
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false);
-          setEditingBookmark(null);
-          setPendingUrl("");
-        }}
-        onAdd={handleSaveBookmark}
-        categories={categories}
-        customIcons={customIcons}
-        initialUrl={pendingUrl}
-        editBookmark={editingBookmark}
-        onOpenIconManager={() => setIsIconManagerOpen(true)}
-          onCategoryAdded={(newCategory) => appendCategory(newCategory)}
-          enableAutoAi={enableAutoAi}
-          defaultVisibility={defaultBookmarkVisibility}
-        />
+      {retainBookmarkModal && (
+        <Suspense fallback={null}>
+          <AddBookmarkModal
+            isOpen={isAddModalOpen}
+            onClose={() => {
+              setIsAddModalOpen(false);
+              setEditingBookmark(null);
+              setPendingUrl("");
+            }}
+            onAdd={handleSaveBookmark}
+            categories={categories}
+            customIcons={customIcons}
+            initialUrl={pendingUrl}
+            editBookmark={editingBookmark}
+            onOpenIconManager={() => setIsIconManagerOpen(true)}
+            onCategoryAdded={(newCategory) => appendCategory(newCategory)}
+            enableAutoAi={enableAutoAi}
+            defaultVisibility={defaultBookmarkVisibility}
+          />
+        </Suspense>
+      )}
 
-      <IconManager
-        isOpen={isIconManagerOpen}
-        onClose={() => setIsIconManagerOpen(false)}
-        customIcons={customIcons}
-        onAddIcon={addCustomIcon}
-        onDeleteIcon={deleteCustomIcon}
-      />
+      {retainIconManager && (
+        <Suspense fallback={null}>
+          <IconManager
+            isOpen={isIconManagerOpen}
+            onClose={() => setIsIconManagerOpen(false)}
+            customIcons={customIcons}
+            onAddIcon={addCustomIcon}
+            onDeleteIcon={deleteCustomIcon}
+          />
+        </Suspense>
+      )}
 
-      <CategoryEditModal
-        isOpen={isCategoryModalOpen}
-        category={editingCategory}
-        mode={categoryModalMode}
-        onClose={() => {
-          setIsCategoryModalOpen(false);
-          setEditingCategory(null);
-        }}
-        onSave={(id, updates) => updateCategory(id, updates)}
-        onDelete={(id) => deleteCategory(id)}
-        onAdd={(category) => addCategory(category)}
-      />
+      {retainCategoryModal && (
+        <Suspense fallback={null}>
+          <CategoryEditModal
+            isOpen={isCategoryModalOpen}
+            category={editingCategory}
+            mode={categoryModalMode}
+            onClose={() => {
+              setIsCategoryModalOpen(false);
+              setEditingCategory(null);
+            }}
+            onSave={(id, updates) => updateCategory(id, updates)}
+            onDelete={(id) => deleteCategory(id)}
+            onAdd={(category) => addCategory(category)}
+          />
+        </Suspense>
+      )}
 
       {/* Context Menu */}
       {contextMenu.bookmark && (
@@ -1144,7 +1209,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
     {/* 桌面端迷你监控 — 固定位置 */}
     {effectiveWidgetVisibility.dockMiniMonitor !== false && (
       <div className="hidden md:flex fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-        <SystemMonitor initialMode="mini" size="sm" showLoading={false} />
+        <Suspense fallback={null}>
+          <SystemMonitor initialMode="mini" size="sm" showLoading={false} />
+        </Suspense>
       </div>
     )}
 
@@ -1170,7 +1237,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           }))}
         leftSlot={
           effectiveWidgetVisibility.mobileTicker !== false
-            ? <SystemMonitor initialMode="inline" compact showLoading={false} />
+            ? <Suspense fallback={null}><SystemMonitor initialMode="inline" compact showLoading={false} /></Suspense>
             : undefined
         }
       />

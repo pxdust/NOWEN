@@ -149,7 +149,7 @@ export function SystemMonitor({
   className,
   size = 'md',
   compact = false,
-  refreshInterval = 3000,
+  refreshInterval = 5000,
   showLoading = true,
   storageKey = STORAGE_KEY_DEFAULT,
 }: SystemMonitorProps) {

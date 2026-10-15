@@ -46,10 +46,11 @@ export default defineConfig(({ mode }) => {
       // 分包策略
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'motion': ['framer-motion'],
-            'dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          manualChunks(id) {
+            if (id.includes('framer-motion') || id.includes('motion-dom') || id.includes('motion-utils')) {
+              return 'motion'
+            }
+            if (id.includes('@dnd-kit')) return 'dnd'
           },
         },
       },

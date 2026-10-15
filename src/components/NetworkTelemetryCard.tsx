@@ -347,8 +347,9 @@ export function NetworkTelemetryCard({ className, forceCollapsed }: { className?
     '/api/system/dynamic',
     fetcher,
     {
-      refreshInterval: 2000, // 2秒刷新
+      refreshInterval: 5000,
       revalidateOnFocus: false,
+      dedupingInterval: 4000,
     }
   )
 
