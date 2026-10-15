@@ -1405,25 +1405,17 @@ const MemoizedBookmarkItem = React.memo(function MemoizedBookmarkItem({
     </SpotlightCard>
   );
 
-  if (lightweight) {
-    // 轻量模式：不使用 framer-motion 包裹
-    return (
-      <SortableCard id={bookmark.id}>
-        <div className="h-full">{card}</div>
-      </SortableCard>
-    );
-  }
-
   return (
     <SortableCard id={bookmark.id}>
-      <motion.div
-        className="h-full"
-        initial={{ opacity: 0, y: isLiteMode ? 5 : 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: animDelay, duration: 0.25 }}
+      <div
+        className={lightweight ? 'h-full' : 'bookmark-enter h-full'}
+        style={lightweight ? undefined : {
+          animationDelay: `${animDelay}s`,
+          animationDuration: isLiteMode ? '0.18s' : '0.28s',
+        }}
       >
         {card}
-      </motion.div>
+      </div>
     </SortableCard>
   );
 });

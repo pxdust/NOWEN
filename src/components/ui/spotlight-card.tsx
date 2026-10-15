@@ -1,6 +1,6 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useRef, useCallback, useEffect } from 'react'
 import { cn } from '../../lib/utils'
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion'
 
 interface SpotlightCardProps {
   children: React.ReactNode
@@ -62,34 +62,40 @@ export function SpotlightCard({
   openOnMiddleClick = Boolean(onContextMenu),
 }: SpotlightCardProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const rafIdRef = useRef<number>(0)
-  const [opacity, setOpacity] = useState(0)
-  const [isHovered, setIsHovered] = useState(false)
+  const glowRef = useRef<HTMLDivElement>(null)
+  const rectRef = useRef<DOMRect | null>(null)
+  const rafIdRef = useRef(0)
+  const pointRef = useRef({ x: 0, y: 0 })
+  const reducedMotion = usePrefersReducedMotion()
 
-  // VIBE CODING：使用 RAF 节流 + CSS 变量，避免频繁 setState
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return
-    
-    cancelAnimationFrame(rafIdRef.current)
-    rafIdRef.current = requestAnimationFrame(() => {
-      if (!containerRef.current) return
-      const rect = containerRef.current.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-      // 使用 CSS 变量更新位置，避免 React 重渲染
-      containerRef.current.style.setProperty('--spotlight-x', `${x}px`)
-      containerRef.current.style.setProperty('--spotlight-y', `${y}px`)
-    })
+  const paintGlow = useCallback(() => {
+    const glow = glowRef.current
+    if (!glow) return
+    const { x, y } = pointRef.current
+    glow.style.transform = `translate3d(${x - 144}px, ${y - 144}px, 0)`
   }, [])
 
+  // 进入时量一次矩形，移动时只改 transform，避免每帧重绘 radial-gradient。
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = rectRef.current
+    if (!rect) return
+    pointRef.current.x = e.clientX - rect.left
+    pointRef.current.y = e.clientY - rect.top
+    if (rafIdRef.current) return
+    rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = 0
+      paintGlow()
+    })
+  }, [paintGlow])
+
   const handleMouseEnter = useCallback(() => {
-    setOpacity(1)
-    setIsHovered(true)
+    if (containerRef.current) {
+      rectRef.current = containerRef.current.getBoundingClientRect()
+    }
   }, [])
 
   const handleMouseLeave = useCallback(() => {
-    setOpacity(0)
-    setIsHovered(false)
+    rectRef.current = null
   }, [])
 
   // 中键按下时阻止浏览器进入自动滚屏模式，但不影响卡片内按钮等独立控件。
@@ -147,8 +153,8 @@ export function SpotlightCard({
         onClick={onClick}
         onContextMenu={onContextMenu}
         className={cn(
-          'relative overflow-hidden rounded-2xl backdrop-blur-xl',
-          'transition-all duration-300 hover:-translate-y-1',
+          'relative overflow-hidden rounded-2xl backdrop-blur-md',
+          'transition-transform duration-300 hover:-translate-y-1',
           onClick && 'cursor-pointer active:scale-[0.98]',
           sizeClasses[size],
           className
@@ -165,70 +171,39 @@ export function SpotlightCard({
   }
 
   return (
-    <motion.div
+    <div
       ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseMove={reducedMotion ? undefined : handleMouseMove}
+      onMouseEnter={reducedMotion ? undefined : handleMouseEnter}
+      onMouseLeave={reducedMotion ? undefined : handleMouseLeave}
       onMouseDown={handleMouseDown}
       onAuxClick={handleAuxClick}
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={cn(
-        'relative overflow-hidden rounded-2xl backdrop-blur-xl',
-        'transition-all duration-500',
+        'group spotlight-card relative overflow-hidden rounded-2xl backdrop-blur-md',
         onClick && 'cursor-pointer',
         sizeClasses[size],
         className
       )}
       style={{
-        '--spotlight-x': '0px',
-        '--spotlight-y': '0px',
         background: 'var(--color-glass)',
         border: '1px solid var(--color-glass-border)',
-        boxShadow: 'var(--color-shadow)',
-      } as React.CSSProperties}
-      whileHover={{ 
-        y: -4,
-        boxShadow: 'var(--color-shadow-hover)',
-        transition: { duration: 0.3 }
       }}
-      whileTap={onClick ? { scale: 0.98 } : undefined}
     >
-      {/* Spotlight Gradient - 跟随鼠标的聚光灯效果（夜间模式专属）*/}
-      {/* VIBE CODING：使用 CSS 变量定位，性能更好 */}
-      <div
-        className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300 dark:block hidden will-change-transform"
-        style={{
-          opacity,
-          background: `radial-gradient(600px circle at var(--spotlight-x) var(--spotlight-y), ${spotlightColor}, transparent 40%)`,
-        }}
-      />
-
-      {/* Border Spotlight - 边缘发光（夜间模式专属） */}
-      <div
-        className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300 dark:block hidden"
-        style={{
-          opacity,
-          background: `radial-gradient(400px circle at var(--spotlight-x) var(--spotlight-y), rgba(255,255,255,0.06), transparent 40%)`,
-        }}
-      />
-
-      {/* Animated Border Beam - 夜间模式专属 */}
-      {isHovered && (
-        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none dark:block hidden">
-          <div
-            className="absolute w-20 h-20 bg-gradient-to-r from-transparent via-white/20 to-transparent blur-sm animate-border-beam will-change-transform"
-            style={{
-              offsetPath: `rect(0 100% 100% 0 round ${16}px)`,
-            }}
-          />
-        </div>
+      {!reducedMotion && (
+        <div
+          ref={glowRef}
+          className="spotlight-glow pointer-events-none absolute left-0 top-0 h-72 w-72 rounded-full opacity-0 dark:block hidden"
+          style={{
+            background: `radial-gradient(circle, ${spotlightColor} 0%, rgba(255,255,255,0.07) 34%, transparent 70%)`,
+            transform: 'translate3d(-999px, -999px, 0)',
+          }}
+        />
       )}
 
-      {/* Content */}
       <div className="relative z-10">{children}</div>
-    </motion.div>
+    </div>
   )
 }
 

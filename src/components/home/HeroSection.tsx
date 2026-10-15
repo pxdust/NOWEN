@@ -122,7 +122,6 @@ export function HeroSection({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          layout
         >
           {isLiteMode ? (
             // 精简模式：静态文字，无 Sparkles 特效

@@ -99,27 +99,10 @@ export function BookmarkCard({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.95, y: 20, filter: 'blur(8px)' }}
-      animate={{ 
-        opacity: isDragging ? 0.5 : 1, 
-        scale: isDragging ? 1.05 : 1,
-        y: 0,
-        filter: 'blur(0px)',
-      }}
-      exit={{ opacity: 0, scale: 0.95, y: -15, filter: 'blur(8px)' }}
-      // 1. 物理层：克制的浮起，保持重量感
-      whileHover={{ 
-        y: -4,         // 轻微浮起，不是跳跃
-        scale: 1.01,   // 几乎不缩放，克制
-      }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ 
-        type: 'spring', 
-        stiffness: 300, 
-        damping: 25,
-        layout: { duration: 0.3 }
-      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isDragging ? 0.5 : 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
       // 2. 视觉层：使用 vibe-card 全局能量类
       className={cn(
         'vibe-card vibe-card--glow group cursor-pointer h-full',

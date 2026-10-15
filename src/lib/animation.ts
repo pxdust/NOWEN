@@ -265,13 +265,11 @@ export const surfaceUpVariant = {
     opacity: 0, 
     y: 40,           // 从较深的水下浮上来
     scale: 0.95,     // 水下折射，看起来小一点
-    filter: "blur(10px)" // 水下模糊
   },
   visible: { 
     opacity: 1, 
     y: 0, 
     scale: 1,
-    filter: "blur(0px)",
     transition: {
       ...surfacePhysics,
       delay: 0.1      // 稍微滞后一点
@@ -280,7 +278,6 @@ export const surfaceUpVariant = {
   exit: {
     opacity: 0,
     y: -20,          // 离开时继续向上蒸发，而不是沉下去
-    filter: "blur(10px)",
     transition: { duration: 0.3 }
   }
 }
@@ -293,13 +290,11 @@ export const surfaceUpShallowVariant = {
     opacity: 0, 
     y: 20,
     scale: 0.98,
-    filter: "blur(5px)"
   },
   visible: { 
     opacity: 1, 
     y: 0, 
     scale: 1,
-    filter: "blur(0px)",
     transition: {
       type: "spring",
       stiffness: 150,
@@ -310,7 +305,6 @@ export const surfaceUpShallowVariant = {
   exit: {
     opacity: 0,
     y: -10,
-    filter: "blur(5px)",
     transition: { duration: 0.2 }
   }
 }
@@ -325,13 +319,11 @@ export const staggeredSurfaceVariant = (index: number, staggerDelay = 0.05) => (
     opacity: 0, 
     y: 30,
     scale: 0.96,
-    filter: "blur(8px)"
   },
   visible: { 
     opacity: 1, 
     y: 0, 
     scale: 1,
-    filter: "blur(0px)",
     transition: {
       ...surfacePhysics,
       delay: index * staggerDelay
@@ -340,7 +332,6 @@ export const staggeredSurfaceVariant = (index: number, staggerDelay = 0.05) => (
   exit: {
     opacity: 0,
     y: -15,
-    filter: "blur(8px)",
     transition: { duration: 0.2 }
   }
 })
@@ -374,13 +365,11 @@ export const popUpVariant = {
     opacity: 0, 
     scale: 0.9,
     y: 20,
-    filter: "blur(10px)"
   },
   visible: { 
     opacity: 1, 
     scale: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
       type: "spring",
       stiffness: 200,
@@ -392,7 +381,6 @@ export const popUpVariant = {
     opacity: 0,
     scale: 0.95,
     y: 10,
-    filter: "blur(10px)",
     transition: { duration: 0.2 }
   }
 }

@@ -18,10 +18,10 @@ interface UseDragAndDropOptions {
   disabled?: boolean;
 }
 
-// DndContext measuring 配置：优化网格拖拽测量频率
+// 只在拖拽进行时测量落点。Always 会在空闲时也对每张卡片调用 getBoundingClientRect。
 export const measuringConfig = {
   droppable: {
-    strategy: MeasuringStrategy.Always,
+    strategy: MeasuringStrategy.WhileDragging,
   },
 };
 

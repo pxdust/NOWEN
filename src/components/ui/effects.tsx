@@ -40,7 +40,6 @@ export function Meteors({ number = MAX_VISIBLE_METEORS, className }: MeteorsProp
             top: meteor.top,
             animationDelay: meteor.animationDelay,
             animationDuration: meteor.animationDuration,
-            willChange: 'transform, opacity',
           }}
         >
           {/* Tail */}
@@ -58,36 +57,32 @@ interface SparklesProps {
 }
 
 export function Sparkles({ children, className, sparkleCount = 10 }: SparklesProps) {
-  const sparkles = Array.from({ length: sparkleCount }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    delay: Math.random() * 2,
-    duration: Math.random() * 1 + 1,
-    size: Math.random() * 4 + 2,
-  }))
+  const sparkles = useMemo(
+    () =>
+      Array.from({ length: sparkleCount }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        delay: Math.random() * 2,
+        duration: Math.random() * 1 + 1,
+        size: Math.random() * 4 + 2,
+      })),
+    [sparkleCount],
+  )
 
   return (
     <span className={cn('relative inline-block', className)}>
       {sparkles.map((sparkle) => (
-        <motion.span
+        <span
           key={sparkle.id}
-          className="absolute inline-block"
+          className="sparkle-pop absolute inline-block pointer-events-none motion-reduce:hidden"
           style={{
             left: sparkle.left,
             top: sparkle.top,
             width: sparkle.size,
             height: sparkle.size,
-          }}
-          animate={{
-            scale: [0, 1, 0],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: sparkle.duration,
-            repeat: Infinity,
-            delay: sparkle.delay,
-            ease: 'easeInOut',
+            animationDelay: `${sparkle.delay}s`,
+            animationDuration: `${sparkle.duration}s`,
           }}
         >
           <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
@@ -97,7 +92,7 @@ export function Sparkles({ children, className, sparkleCount = 10 }: SparklesPro
               className="text-nebula-cyan"
             />
           </svg>
-        </motion.span>
+        </span>
       ))}
       {children}
     </span>
