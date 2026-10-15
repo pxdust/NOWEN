@@ -252,7 +252,7 @@ export function Spotlight({
             onClick={onClose}
           >
             <motion.div 
-              className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+              className="absolute inset-0 bg-black/75"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -267,7 +267,7 @@ export function Spotlight({
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className="overflow-hidden rounded-2xl bg-[#1a1a24]/95 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/50">
+            <div className="overflow-hidden rounded-2xl bg-[#1a1a24]/95 border border-white/10 shadow-2xl shadow-black/50">
               {/* 输入区 */}
               <div className="flex items-center gap-4 px-5 border-b border-white/5">
                 <Search className="w-5 h-5 shrink-0" style={{ color: 'var(--text-muted)' }} />
@@ -320,17 +320,15 @@ export function Spotlight({
                 )}
 
                 {results.map((result, index) => (
-                  <motion.button
+                  <button
                     key={result.id}
+                    type="button"
                     className={cn(
                       "w-full px-5 py-3 flex items-center gap-4 text-left transition-colors",
                       index === selectedIndex ? "bg-white/5" : "hover:bg-white/[0.02]"
                     )}
                     onClick={result.action}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.03 }}
                   >
                     {/* 图标 */}
                     <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 overflow-hidden">
@@ -368,7 +366,7 @@ export function Spotlight({
                         <ArrowRight className="w-3 h-3" />
                       </div>
                     )}
-                  </motion.button>
+                  </button>
                 ))}
               </div>
 

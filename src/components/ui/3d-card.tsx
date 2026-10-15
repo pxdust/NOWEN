@@ -16,6 +16,7 @@ export function Card3D({
   glowColor = 'rgba(102, 126, 234, 0.4)',
 }: Card3DProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const rectRef = useRef<DOMRect | null>(null)
   const [isHovered, setIsHovered] = useState(false)
 
   const x = useMotionValue(0)
@@ -28,23 +29,20 @@ export function Card3D({
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ['-12deg', '12deg'])
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return
+    const rect = rectRef.current
+    if (!rect || rect.width === 0 || rect.height === 0) return
 
-    const rect = ref.current.getBoundingClientRect()
-    const width = rect.width
-    const height = rect.height
-    const mouseX = e.clientX - rect.left
-    const mouseY = e.clientY - rect.top
-    const xPct = mouseX / width - 0.5
-    const yPct = mouseY / height - 0.5
-
-    x.set(xPct)
-    y.set(yPct)
+    x.set((e.clientX - rect.left) / rect.width - 0.5)
+    y.set((e.clientY - rect.top) / rect.height - 0.5)
   }
 
-  const handleMouseEnter = () => setIsHovered(true)
+  const handleMouseEnter = () => {
+    if (ref.current) rectRef.current = ref.current.getBoundingClientRect()
+    setIsHovered(true)
+  }
   const handleMouseLeave = () => {
     setIsHovered(false)
+    rectRef.current = null
     x.set(0)
     y.set(0)
   }
@@ -65,7 +63,7 @@ export function Card3D({
           transformStyle: 'preserve-3d',
         }}
         className={cn(
-          'relative rounded-2xl transition-shadow duration-500',
+          'relative rounded-2xl',
           isHovered && 'shadow-glow-md',
           className
         )}
@@ -81,20 +79,12 @@ export function Card3D({
 
         {/* Border Beam Effect */}
         {isHovered && (
-          <div className="absolute inset-0 rounded-2xl overflow-hidden">
-            <motion.div
-              className="absolute w-20 h-20 rounded-full"
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div
+              className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-spin"
               style={{
                 background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
-                filter: 'blur(10px)',
-              }}
-              animate={{
-                rotate: 360,
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'linear',
+                animationDuration: '3s',
               }}
             />
           </div>
@@ -102,7 +92,7 @@ export function Card3D({
 
         {/* Card Content */}
         <div
-          className="relative z-10 rounded-2xl backdrop-blur-xl"
+          className="relative z-10 rounded-2xl backdrop-blur-md"
           style={{ 
             transform: 'translateZ(0)',
             background: 'var(--color-glass)',

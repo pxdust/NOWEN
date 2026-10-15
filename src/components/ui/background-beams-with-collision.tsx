@@ -1,7 +1,7 @@
 "use client"
 import { cn } from "../../lib/utils"
-import { motion, AnimatePresence, useMotionValue, useAnimationFrame } from "framer-motion"
-import React, { useState, useCallback, useRef } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import React, { useState, useCallback, useEffect, useRef } from "react"
 
 export const BackgroundBeamsWithCollision = ({
   children,
@@ -146,7 +146,6 @@ const ExplosionParticles = React.memo(({
             width: p.size,
             height: p.size,
             background: color,
-            boxShadow: `0 0 ${p.size * 2}px ${color}`,
           }}
           initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
           animate={{
@@ -167,8 +166,25 @@ const ExplosionParticles = React.memo(({
 
 ExplosionParticles.displayName = "ExplosionParticles"
 
+function beamKeyframes(activePortion: number): Keyframe[] {
+  const end = Math.min(Math.max(activePortion, 0.05), 1)
+  const fadeIn = end * 0.12
+  const fallDone = Math.max(end * 0.92, fadeIn + 0.01)
+  const frames: Keyframe[] = [
+    { transform: 'translate3d(0, -200px, 0)', opacity: 0.2, offset: 0 },
+    { transform: 'translate3d(0, -200px, 0)', opacity: 0.85, offset: fadeIn },
+    { transform: 'translate3d(0, calc(100vh - 10px), 0)', opacity: 0.9, offset: Math.min(fallDone, end - 0.01) },
+    { transform: 'translate3d(0, calc(100vh - 10px), 0)', opacity: 0, offset: end },
+  ]
+  if (end < 0.999) {
+    frames.push({ transform: 'translate3d(0, calc(100vh - 10px), 0)', opacity: 0, offset: 1 })
+  }
+  return frames
+}
+
 /**
- * 光束组件 - 通过 ref 监测实际 DOM 位置判断是否到达底部
+ * 光束用 WAAPI 做 transform/opacity，落点用时长推算。
+ * 不再每帧 getBoundingClientRect（原先最多 10 条光束 × 2 次强制布局）。
  */
 const BeamEffect = React.memo(({
   beamOptions = {},
@@ -192,60 +208,60 @@ const BeamEffect = React.memo(({
   onCollision?: (x: number) => void
 }) => {
   const beamRef = useRef<HTMLDivElement>(null)
-  const hasFiredRef = useRef(false)
+  const onCollisionRef = useRef(onCollision)
+  onCollisionRef.current = onCollision
 
-  // 每帧检测光束位置，到达容器底部时触发爆炸
-  // 无 onCollision 回调时（移动端）跳过 DOM 查询
-  useAnimationFrame(() => {
-    if (!onCollision) return
+  const durationSec = beamOptions.duration || 8
+  const delaySec = beamOptions.delay || 0
+  const pauseSec = beamOptions.repeatDelay || 0
+  const originX = beamOptions.translateX || beamOptions.initialX || 0
+
+  useEffect(() => {
     const el = beamRef.current
-    if (!el || !el.parentElement) return
+    if (!el || typeof el.animate !== 'function') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-    const containerRect = el.parentElement.getBoundingClientRect()
-    const beamRect = el.getBoundingClientRect()
-    
-    // 光束底边距容器底边的距离
-    const distanceToBottom = containerRect.bottom - beamRect.bottom
+    const duration = durationSec * 1000
+    const pause = pauseSec * 1000
+    const delay = delaySec * 1000
+    const cycle = duration + pause
+    const animation = el.animate(beamKeyframes(duration / cycle), {
+      duration: cycle,
+      delay,
+      iterations: Infinity,
+      easing: 'linear',
+      fill: 'both',
+    })
 
-    if (distanceToBottom < 30 && !hasFiredRef.current) {
-      // 光束到达底部，触发爆炸
-      hasFiredRef.current = true
-      const x = beamOptions.translateX || 0
-      onCollision?.(x)
-    } else if (distanceToBottom > 100) {
-      // 光束远离底部，重置触发标记（为下一次循环做准备）
-      hasFiredRef.current = false
+    let intervalId = 0
+    let timeoutId = 0
+    if (onCollisionRef.current) {
+      timeoutId = window.setTimeout(() => {
+        if (!document.hidden) onCollisionRef.current?.(originX)
+        intervalId = window.setInterval(() => {
+          if (document.hidden) return
+          onCollisionRef.current?.(originX)
+        }, cycle)
+      }, delay + duration)
     }
-  })
+
+    return () => {
+      animation.cancel()
+      window.clearTimeout(timeoutId)
+      window.clearInterval(intervalId)
+    }
+  }, [delaySec, durationSec, originX, pauseSec, Boolean(onCollision)])
 
   return (
-    <motion.div
+    <div
       ref={beamRef}
-      initial={{
-        translateY: beamOptions.initialY || "-200px",
-        translateX: beamOptions.initialX || "0px",
-        rotate: beamOptions.rotate || 0,
-        opacity: 0.8,
-      }}
-      animate={{
-        translateY: "calc(100vh - 10px)",
-        translateX: beamOptions.translateX || "0px",
-        rotate: beamOptions.rotate || 0,
-        opacity: [0.8, 1, 0.8, 0],
-      }}
-      transition={{
-        duration: beamOptions.duration || 8,
-        repeat: Infinity,
-        repeatType: "loop",
-        ease: "linear",
-        delay: beamOptions.delay || 0,
-        repeatDelay: beamOptions.repeatDelay || 0,
-      }}
       className={cn(
-        "absolute left-0 top-20 m-auto h-14 w-px rounded-full will-change-transform",
+        "absolute top-20 m-auto h-14 w-px rounded-full",
         beamOptions.className
       )}
       style={{
+        left: originX,
+        opacity: 0,
         background: beamGradient || "linear-gradient(to top, var(--color-glow), var(--color-glow-secondary), transparent)",
         boxShadow: beamShadow || "0 0 8px var(--color-glow), 0 0 16px var(--color-glow-secondary)",
       }}

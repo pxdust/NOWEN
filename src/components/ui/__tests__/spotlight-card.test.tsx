@@ -9,6 +9,10 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+function auxClick(target: Element, button: number) {
+  fireEvent(target, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button }))
+}
+
 describe('SpotlightCard middle click', () => {
   it('runs the bookmark action on middle click and keeps focus on the current page', () => {
     const onClick = vi.fn()
@@ -26,7 +30,7 @@ describe('SpotlightCard middle click', () => {
     const card = container.querySelector<HTMLElement>('.test-card')
     expect(card).toBeTruthy()
 
-    fireEvent.auxClick(card!, { button: 1 })
+    auxClick(card!, 1)
 
     expect(onClick).toHaveBeenCalledTimes(1)
     expect(focusSpy).toHaveBeenCalledTimes(1)
@@ -68,7 +72,7 @@ describe('SpotlightCard middle click', () => {
         </div>,
       )
 
-      fireEvent.auxClick(getByText('Bookmark title'), { button: 1 })
+      auxClick(getByText('Bookmark title'), 1)
 
       expect(onClick).toHaveBeenCalledTimes(1)
     },
@@ -86,7 +90,7 @@ describe('SpotlightCard middle click', () => {
       </SpotlightCard>,
     )
 
-    fireEvent.auxClick(getByRole('button', { name: 'Pin bookmark' }), { button: 1 })
+    auxClick(getByRole('button', { name: 'Pin bookmark' }), 1)
 
     expect(onClick).not.toHaveBeenCalled()
   })
@@ -108,8 +112,8 @@ describe('SpotlightCard middle click', () => {
     const card = container.querySelector<HTMLElement>('.test-card')
     expect(card).toBeTruthy()
 
-    fireEvent.auxClick(card!, { button: 2 })
-    fireEvent.auxClick(card!, { button: 1 })
+    auxClick(card!, 2)
+    auxClick(card!, 1)
 
     expect(onClick).not.toHaveBeenCalled()
   })

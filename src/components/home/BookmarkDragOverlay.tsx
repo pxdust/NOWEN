@@ -36,7 +36,7 @@ export function BookmarkDragOverlay({ activeBookmark, cardViewMode = 'standard' 
             opacity: 0.95,
           }}
         >
-          <SpotlightCard className="h-full cursor-grabbing" size={isCompact ? 'sm' : 'md'} spotlightColor="rgba(99, 102, 241, 0.2)">
+          <SpotlightCard lightweight className="h-full cursor-grabbing" size={isCompact ? 'sm' : 'md'} spotlightColor="rgba(99, 102, 241, 0.2)">
             <div className={`flex ${isCompact ? 'flex-row items-center gap-3' : 'flex-col'} h-full`}>
               <div
                 className={`${isCompact ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl flex items-center justify-center ${isCompact ? '' : 'mb-4'} flex-shrink-0`}

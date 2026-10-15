@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, useMemo } from "react";
+import { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import {
   motion,
   AnimatePresence,
@@ -113,6 +113,24 @@ export function FloatingDock({
   const dragStartPos = useRef({ x: 0, y: 0 });
   const dragStartMouse = useRef({ x: 0, y: 0 });
   const hasDragged = useRef(false);
+  const moveRaf = useRef(0);
+  const pendingPointerX = useRef(0);
+
+  const applyDockPosition = useCallback((x: number, y: number) => {
+    const el = dockRef.current;
+    if (!el) return;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.transform = isCollapsed
+      ? "translate(-50%, -50%)"
+      : `translate(${getDockTranslateX(x, expandedDockWidth)}, ${getDockTranslateY(y)})`;
+  }, [expandedDockWidth, isCollapsed]);
+
+  useLayoutEffect(() => {
+    if (isDragging) applyDockPosition(posRef.current.x, posRef.current.y);
+  });
+
+  useEffect(() => () => cancelAnimationFrame(moveRaf.current), []);
 
   // 入场动画
   const [entered, setEntered] = useState(false);
@@ -175,7 +193,15 @@ export function FloatingDock({
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!isDragging) {
-        if (!isCollapsed) hoverMouseX.set(e.clientX);
+        if (!isCollapsed) {
+          pendingPointerX.current = e.clientX;
+          if (moveRaf.current === 0) {
+            moveRaf.current = requestAnimationFrame(() => {
+              moveRaf.current = 0;
+              hoverMouseX.set(pendingPointerX.current);
+            });
+          }
+        }
         return;
       }
       const dx = e.clientX - dragStartMouse.current.x;
@@ -184,14 +210,16 @@ export function FloatingDock({
       const nx = Math.max(DOCK_MARGIN, Math.min(window.innerWidth - DOCK_MARGIN, dragStartPos.current.x + dx));
       const ny = Math.max(DOCK_MARGIN, Math.min(window.innerHeight - DOCK_MARGIN, dragStartPos.current.y + dy));
       posRef.current = { x: nx, y: ny };
-      setPos({ x: nx, y: ny });
+      applyDockPosition(nx, ny);
     },
-    [isDragging, hoverMouseX, isCollapsed]
+    [applyDockPosition, isDragging, hoverMouseX, isCollapsed]
   );
 
   const handlePointerUp = useCallback(() => {
     if (!isDragging) return;
-    savePos(posRef.current.x, posRef.current.y);
+    const { x, y } = posRef.current;
+    savePos(x, y);
+    setPos({ x, y });
     const didDrag = hasDragged.current;
     setTimeout(() => {
       setIsDragging(false);
@@ -239,13 +267,12 @@ export function FloatingDock({
             transition={isMobile ? { duration: 0.15 } : { type: "spring", stiffness: 400, damping: 25 }}
             className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center",
-              "backdrop-blur-xl border cursor-pointer",
+              "backdrop-blur-md border cursor-pointer",
               isDark
                 ? "bg-black/70 border-white/15 shadow-lg shadow-black/40"
                 : "bg-white/90 border-slate-200/80 shadow-lg shadow-slate-200/50"
             )}
             style={{
-              willChange: "transform, opacity",
               boxShadow: isDark
                 ? "0 0 20px rgba(34, 211, 238, 0.15), 0 4px 20px rgba(0,0,0,0.4)"
                 : "0 0 20px rgba(59, 130, 246, 0.1), 0 4px 20px rgba(0,0,0,0.1)",
@@ -257,23 +284,16 @@ export function FloatingDock({
                 isDark ? "text-cyan-400/80" : "text-blue-500/70"
               )}
             />
-            {/* 呼吸光晕 - 移动端禁用以提升性能 */}
+            {/* 呼吸光晕走 opacity，避免每帧重绘 box-shadow */}
             {!isMobile && (
               <motion.div
                 className="absolute inset-0 rounded-full pointer-events-none"
-                animate={{
+                style={{
                   boxShadow: isDark
-                    ? [
-                        "0 0 8px rgba(34, 211, 238, 0.2)",
-                        "0 0 16px rgba(34, 211, 238, 0.35)",
-                        "0 0 8px rgba(34, 211, 238, 0.2)",
-                      ]
-                    : [
-                        "0 0 8px rgba(59, 130, 246, 0.15)",
-                        "0 0 16px rgba(59, 130, 246, 0.25)",
-                        "0 0 8px rgba(59, 130, 246, 0.15)",
-                      ],
+                    ? "0 0 14px rgba(34, 211, 238, 0.35)"
+                    : "0 0 14px rgba(59, 130, 246, 0.28)",
                 }}
+                animate={{ opacity: [0.35, 0.9, 0.35] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             )}
@@ -289,9 +309,8 @@ export function FloatingDock({
             className="flex items-end gap-1 px-2.5 py-1.5 rounded-xl"
             style={{
               background: "var(--color-glass)",
-              backdropFilter: "blur(24px) saturate(180%)",
-              WebkitBackdropFilter: "blur(24px) saturate(180%)",
-              willChange: "transform, opacity",
+              backdropFilter: "blur(12px) saturate(160%)",
+              WebkitBackdropFilter: "blur(12px) saturate(160%)",
               border: isDragging
                 ? `2px solid ${isDark ? "rgba(34, 211, 238, 0.5)" : "rgba(59, 130, 246, 0.5)"}`
                 : "1px solid var(--color-glass-border)",
@@ -339,6 +358,8 @@ export function FloatingDock({
                     isDark={isDark}
                     isDragging={isDragging}
                     isMobile={isMobile}
+                    anchorX={pos.x}
+                    anchorY={pos.y}
                     {...item}
                   />
                 ))}
@@ -355,6 +376,8 @@ export function FloatingDock({
                 isDark={isDark}
                 isDragging={isDragging}
                 isMobile={isMobile}
+                anchorX={pos.x}
+                anchorY={pos.y}
                 {...item}
               />
             ))}
@@ -377,6 +400,8 @@ interface DockItemProps {
   isDark: boolean;
   isDragging: boolean;
   isMobile: boolean;
+  anchorX: number;
+  anchorY: number;
 }
 
 function DockItem({
@@ -389,8 +414,11 @@ function DockItem({
   isDark,
   isDragging,
   isMobile,
+  anchorX,
+  anchorY,
 }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const boundsRef = useRef({ x: 0, width: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [showSubmenu, setShowSubmenu] = useState(false);
   const submenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -408,9 +436,16 @@ function DockItem({
     return () => document.removeEventListener("pointerdown", handleOutside as any);
   }, [showSubmenu]);
 
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const bounds = node.getBoundingClientRect();
+    boundsRef.current = { x: bounds.left, width: bounds.width };
+  }, [anchorX, anchorY]);
+
   const distance = useTransform(mouseX, (val) => {
-    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
-    return val - bounds.x - bounds.width / 2;
+    const { x, width } = boundsRef.current;
+    return val - x - width / 2;
   });
 
   // Mini 版尺寸：基础 36，鱼眼放大到 52；移动端固定 36 以提升性能
@@ -520,8 +555,8 @@ function DockItem({
             className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 p-2 rounded-xl z-50"
             style={{
               background: "var(--color-bg-secondary)",
-              backdropFilter: "blur(24px) saturate(180%)",
-              WebkitBackdropFilter: "blur(24px) saturate(180%)",
+              backdropFilter: "blur(12px) saturate(160%)",
+              WebkitBackdropFilter: "blur(12px) saturate(160%)",
               border: "1px solid var(--color-glass-border)",
               boxShadow: isDark
                 ? "0 -8px 32px rgba(0,0,0,0.4)"
@@ -546,7 +581,7 @@ function DockItem({
                   }}
                   className={cn(
                     "px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap",
-                    "flex items-center gap-2 transition-all duration-200",
+                    "flex items-center gap-2 transition-colors duration-200",
                     "cursor-pointer"
                   )}
                   style={{
@@ -610,8 +645,7 @@ function DockItem({
           color: isHovered
             ? "var(--color-primary)"
             : "var(--color-text-secondary)",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          willChange: "transform",
+          transition: "background-color 0.2s, border-color 0.2s, color 0.2s",
         }}
         whileTap={{ scale: 0.9 }}
       >
@@ -642,10 +676,8 @@ function DockItem({
       {!isMobile && !isDark && (
         <motion.div
           className="absolute inset-0 rounded-lg pointer-events-none"
-          animate={{
-            boxShadow: isHovered ? "var(--color-shadow-hover)" : "none",
-            y: isHovered ? -2 : 0,
-          }}
+          style={{ boxShadow: "var(--color-shadow-hover)" }}
+          animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? -2 : 0 }}
           transition={{ duration: 0.2 }}
         />
       )}
