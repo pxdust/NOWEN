@@ -94,15 +94,15 @@ export function Typewriter({
   // 整句模式渲染
   if (fullSentence) {
     return (
-      <span className={cn('inline-flex items-center justify-center', className)}>
-        {/* 使用 AnimatePresence 包裹，layout 动画实现平滑高度过渡 */}
+      // inline，让名言在父级 line-clamp 里换行，而不是被 flex 撑成一行。
+      <span className={cn('inline whitespace-normal', className)}>
         <AnimatePresence mode="wait">
           <motion.span
             key={displayWord}
-            className="text-center"
-            initial={{ opacity: 0, y: 10 }}
+            className="whitespace-normal"
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.35 }}
           >
             {displayWord}
