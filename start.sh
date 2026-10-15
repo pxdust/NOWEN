@@ -379,8 +379,12 @@ echo ""
 start_safe_backup_daemon
 
 start_backend() {
-  # exec 让 BACKEND_PID 就是 tsx，而不是多包一层会提前退出的 shell
-  (cd /app/server && exec tsx src/index.ts) &
+  # 生产镜像里是 tsc 产物。没有 dist 时（本地直接跑 start.sh）才回退到 tsx。
+  if [ -f /app/server/dist/index.js ]; then
+    (cd /app/server && exec node dist/index.js) &
+  else
+    (cd /app/server && exec npx tsx src/index.ts) &
+  fi
   BACKEND_PID=$!
 }
 

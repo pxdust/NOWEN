@@ -917,9 +917,9 @@ export function SystemMonitorCard({ className, forceCollapsed }: { className?: s
     '/api/system/pulse',
     fetcher,
     {
-      refreshInterval: 3000,
+      refreshInterval: 5000,
       revalidateOnFocus: false,
-      dedupingInterval: 2000
+      dedupingInterval: 4000
     }
   )
 

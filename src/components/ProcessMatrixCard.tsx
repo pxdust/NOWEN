@@ -559,8 +559,9 @@ export function ProcessMatrixCard({ className, forceCollapsed }: { className?: s
     error: containerError,
     isLoading: containerLoading,
   } = useSWR<DockerContainer[]>("/api/system/docker", fetcher, {
-    refreshInterval: 5000,
+    refreshInterval: 15000,
     revalidateOnFocus: false,
+    dedupingInterval: 10000,
   });
 
   // 获取系统动态信息（用于 uptime）
@@ -568,8 +569,9 @@ export function ProcessMatrixCard({ className, forceCollapsed }: { className?: s
     "/api/system/dynamic",
     fetcher,
     {
-      refreshInterval: 10000,
+      refreshInterval: 15000,
       revalidateOnFocus: false,
+      dedupingInterval: 10000,
     }
   );
 

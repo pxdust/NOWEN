@@ -133,7 +133,7 @@ const fetcher = async (url: string): Promise<PulseApiResponse['data']> => {
 // Hook 主体
 // ============================================
 
-export function useSystemVital(refreshInterval = 3000): SystemVitalData {
+export function useSystemVital(refreshInterval = 5000): SystemVitalData {
   const { data, error, isLoading } = useSWR<PulseApiResponse['data']>(
     '/api/system/pulse',
     fetcher,

@@ -98,6 +98,12 @@ cd NOWEN
 docker compose up -d --build
 ```
 
+国内构建如果 npm 很慢，可以给镜像构建加上源：
+
+```bash
+docker build --build-arg NPM_REGISTRY=https://registry.npmmirror.com -t nowen:local .
+```
+
 打开 <http://localhost:39000>，使用默认账号登录：
 
 | 用户名 | 密码 |
