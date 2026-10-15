@@ -2,13 +2,15 @@
 
 > A minimalist personal navigation hub combining bookmark management and system monitoring, featuring deep space aesthetics and glassmorphism design, supporting day/night dual modes with complete real-time hardware monitoring capabilities
 
+This repository is a fork of [cropflre/NOWEN](https://github.com/cropflre/NOWEN). Build the image from this source tree.
+
 ![Version](https://img.shields.io/badge/version-0.2.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![React](https://img.shields.io/badge/React-18.3-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
-![Docker Hub](https://img.shields.io/badge/Docker%20Hub-cropflre%2Fnowen-blue)
+[![Docker](https://img.shields.io/badge/Docker-build%20locally-2496ED)](https://github.com/pxdust/NOWEN)
 ![ARM64](https://img.shields.io/badge/ARM64-Supported-orange)
 
 ## 🌐 Live Demo
@@ -483,179 +485,107 @@ NOWEN/
 **Step 2: Clone Project**
 
 ```bash
-cd D:\Projects
-git clone https://github.com/cropflre/NOWEN.git
+git clone https://github.com/pxdust/NOWEN.git
 cd NOWEN
 ```
 
 **Step 3: Install Dependencies**
 
 ```bash
-# Frontend dependencies
 npm install
-
-# Backend dependencies
-cd server
-npm install
-cd ..
+npm --prefix server install
 ```
 
 **Step 4: Start Services**
 
-Open **two** terminal windows:
-
-**Window 1 - Backend:**
-
 ```bash
-cd D:\Projects\NOWEN\server
-npm run dev
-```
-
-**Window 2 - Frontend:**
-
-```bash
-cd D:\Projects\NOWEN
 npm run dev
 ```
 
 **Step 5: Access Application**
 
-Open browser: http://localhost:5173
+Default development URLs:
+
+```text
+Web: http://localhost:39100
+API: http://localhost:39101
+```
+
+If a port is taken, the launcher picks the next free port and points the frontend proxy at the API port it selected. You can set preferred ports:
+
+```bash
+NOWEN_WEB_PORT=39200 NOWEN_API_PORT=39201 npm run dev
+```
 
 ---
 
 ### Option 2: Docker Installation
 
-#### Using Docker Hub Image (Recommended)
+Build from this repository. You do not need the Docker Hub image `cropflre/nowen`.
+
+The checked-in [`docker-compose.yml`](./docker-compose.yml) uses `build: .`, publishes host port `39000` to Nginx in the container, and stores the database in the named volume `nowen-data` mounted at `/app/server/data`.
+
+#### Docker Compose (recommended)
 
 ```bash
-# Pull image
-docker pull cropflre/nowen:latest
-
-# Create docker-compose.yml
-cat > docker-compose.yml << 'EOF'
-services:
-  nowen:
-    image: cropflre/nowen:latest
-    container_name: nowen
-    restart: unless-stopped
-    stop_grace_period: 15s  # Grace period for data save on shutdown
-    ports:
-      - "3000:3000"        # Web UI port, can change to "8080:3000" etc.
-    volumes:
-      # Data persistence (REQUIRED!) - Named Volume, auto-reused after update
-      - nowen-data:/app/server/data
-      # Backup layer - extra protection, auto-syncs every 5 minutes
-      - nowen-backup:/app/.data-backup
-      # System monitoring mounts (optional, remove if not needed)
-      - /:/host:ro                   # Host filesystem (read-only) for disk info
-      - /proc:/host/proc:ro          # Process info for CPU/Memory/Processes
-      - /sys:/host/sys:ro            # System info for temperature/hardware
-      - /var/run/docker.sock:/var/run/docker.sock  # Docker container monitoring
-    environment:
-      - NODE_ENV=production
-      - SI_FILESYSTEM_DISK_PREFIX=/host
-      - PROC_PATH=/host/proc
-      - SYS_PATH=/host/sys
-      - FS_PATH=/host
-    privileged: true  # Required for temperature and SMART disk info
-
-volumes:
-  nowen-data:
-    name: nowen-data
-  nowen-backup:
-    name: nowen-backup
-EOF
-
-```
-
-**Configuration Notes:**
-
-| Option | Required | Description |
-|--------|----------|-------------|
-| `volumes: nowen-data` | ✅ Required | Main data volume storing SQLite database |
-| `volumes: nowen-backup` | ⚡ Recommended | Backup layer for data protection, auto-syncs every 5 min |
-| System monitoring mounts | 🖥️ Optional | Configure if hardware monitoring is needed |
-| `privileged: true` | 🌡️ Optional | Enable for CPU temperature monitoring |
-| `stop_grace_period` | 📝 Recommended | Ensures graceful data save on container stop |
-
-# Start service
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-```
-
-**Access:** http://localhost:3000
-
----
-
-**Method B: Build Locally**
-
-```bash
-# 1. Clone project
-git clone https://github.com/cropflre/NOWEN.git
+git clone https://github.com/pxdust/NOWEN.git
 cd NOWEN
-
-# 2. Build and start
-docker-compose up -d --build
-
-# 3. View logs
-docker-compose logs -f
+docker compose up -d --build
 ```
 
-**Method C: Docker Run Command**
+**Access:** http://localhost:39000
+
+Production ports inside the container are fixed: Nginx web `39000`, Express API `39001`. Map only the web port. Nginx proxies `/api` inside the container.
+
+#### docker build / docker run
+
+Same ports and data volume as Compose. The host mounts, `PORT=39001`, `privileged`, and 15-second stop timeout match `docker-compose.yml`.
 
 ```bash
-# Run container directly
+git clone https://github.com/pxdust/NOWEN.git
+cd NOWEN
+docker build -t nowen:local .
 docker run -d \
   --name nowen \
   --restart unless-stopped \
-  -p 3000:3000 \
-  -v $(pwd)/nowen-data:/app/server/data \
+  --stop-timeout 15 \
+  -p 39000:39000 \
+  -v nowen-data:/app/server/data \
   -v /:/host:ro \
   -v /proc:/host/proc:ro \
   -v /sys:/host/sys:ro \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -e NODE_ENV=production \
+  -e PORT=39001 \
   -e SI_FILESYSTEM_DISK_PREFIX=/host \
   -e PROC_PATH=/host/proc \
   -e SYS_PATH=/host/sys \
   -e FS_PATH=/host \
   --privileged \
-  cropflre/nowen:latest
+  nowen:local
 ```
 
-**Common Commands**
+**Common commands**
 
 ```bash
-# Stop service
-docker-compose down
-
-# Restart service
-docker-compose restart
-
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
-# Update to latest version
-docker-compose pull
-docker-compose up -d
+# Restart
+docker compose restart
+
+# Stop (the named volume nowen-data is kept unless you pass -v)
+docker compose down
+
+# Update from this repository
+git pull
+docker compose up -d --build
 
 # Check container status
 docker ps
 ```
 
-**System Monitoring Notes**
-
-To enable full system monitoring, you need:
-
-1. Mount host filesystem (read-only)
-2. Mount `/proc` and `/sys` directories
-3. Mount Docker socket (for container monitoring)
-4. Use `privileged` mode (for temperature and hardware info)
-
-If system monitoring is not needed, remove the related mounts and environment variables, keeping only the data directory mount.
+The Compose file mounts the host filesystem read-only, `/proc`, `/sys`, and the Docker socket, and sets `privileged: true`, so system monitoring can read the host. The path that must persist is `/app/server/data` on the named volume `nowen-data`.
 
 ---
 
@@ -665,9 +595,9 @@ If system monitoring is not needed, remove the related mounts and environment va
 2. Create `/docker/nowen` directory
 3. Clone or upload project files
 4. In Container Manager: Projects → Add → Select `docker-compose.yml`
-5. Access: `http://NAS_IP:3000`
+5. Access: `http://NAS_IP:39000`
 
-> ⚠️ **Update Reminder**: Always backup your data before updating images through Synology Container Manager!
+> ⚠️ **Update Reminder**: Always backup your data before updating images through Synology Container Manager! The project Compose file publishes port `39000`.
 
 ---
 
@@ -677,9 +607,9 @@ If system monitoring is not needed, remove the related mounts and environment va
 2. Create `/docker/nowen` directory
 3. Upload project files via File Manager
 4. In Docker app: Compose → Add → Select project path
-5. Access: `http://NAS_IP:3000`
+5. Access: `http://NAS_IP:39000`
 
-> **Important**: When configuring Docker, manually specify the data volume path (e.g., `/docker/nowen/data:/app/server/data`). Do NOT rely on "auto configure storage" — it may not reuse old volumes during container updates, causing data loss.
+> **Important**: When configuring Docker, manually specify the data volume path (e.g., `/docker/nowen/data:/app/server/data`). Do NOT rely on "auto configure storage" — it may not reuse old volumes during container updates, causing data loss. The repository Compose file uses the named volume `nowen-data` mounted at `/app/server/data` and publishes port `39000`.
 
 > ⚠️ **Update Reminder**: Always backup your data before updating images through UGREEN Docker GUI! The "Version Check & Update" feature deletes the old container and creates a new one, which may cause data loss if using "auto configure storage".
 
@@ -690,12 +620,12 @@ If system monitoring is not needed, remove the related mounts and environment va
 ```bash
 ssh root@NAS_IP
 cd /vol1/1000/docker
-git clone https://github.com/cropflre/NOWEN.git nowen
+git clone https://github.com/pxdust/NOWEN.git nowen
 cd nowen
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
-Access: `http://NAS_IP:3000`
+Access: `http://NAS_IP:39000`
 
 ---
 
@@ -705,9 +635,9 @@ Access: `http://NAS_IP:3000`
 2. Create `/Container/nowen` directory
 3. Upload project files
 4. In Container Station: Applications → Create → Docker Compose
-5. Access: `http://NAS_IP:3000`
+5. Access: `http://NAS_IP:39000`
 
-> ⚠️ **Update Reminder**: Always backup your data before updating images through QNAP Container Station!
+> ⚠️ **Update Reminder**: Always backup your data before updating images through QNAP Container Station! The project Compose file publishes port `39000`.
 
 ---
 
@@ -716,12 +646,12 @@ Access: `http://NAS_IP:3000`
 ```bash
 ssh root@NAS_IP
 cd /Volume1/docker
-git clone https://github.com/cropflre/NOWEN.git nowen
+git clone https://github.com/pxdust/NOWEN.git nowen
 cd nowen
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
-Access: `http://NAS_IP:3000`
+Access: `http://NAS_IP:39000`
 
 > ⚠️ **Update Reminder**: Always backup your data before updating images through Extreme Space Docker GUI!
 
@@ -748,55 +678,13 @@ sudo usermod -aG docker $USER
 
 #### Installation Steps
 
-**Method A: Using Docker Hub Image (Recommended)**
+**Build on the device (recommended)**
 
 ```bash
-# Pull image (Docker will automatically pull the arm64 version)
-docker pull cropflre/nowen:latest
-
-# Create project directory
-mkdir -p ~/nowen && cd ~/nowen
-
-# Create docker-compose.yml
-cat > docker-compose.yml << 'EOF'
-services:
-  nowen:
-    image: cropflre/nowen:latest
-    container_name: nowen
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./nowen-data:/app/server/data
-      # System monitoring mounts (optional, recommended for ARM device monitoring)
-      - /:/host:ro
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - NODE_ENV=production
-      - SI_FILESYSTEM_DISK_PREFIX=/host
-      - PROC_PATH=/host/proc
-      - SYS_PATH=/host/sys
-      - FS_PATH=/host
-    privileged: true
-EOF
-
-# Start
-docker compose up -d
-
-# View logs
-docker compose logs -f
-```
-
-**Method B: Build Locally on ARM64 Device**
-
-```bash
-# Clone project
-git clone https://github.com/cropflre/NOWEN.git
+git clone https://github.com/pxdust/NOWEN.git
 cd NOWEN
 
-# Build and start (Docker will automatically build for current arm64 architecture)
+# Docker builds for the current arm64 architecture
 docker compose up -d --build
 
 # Verify architecture in logs
@@ -804,26 +692,19 @@ docker compose logs | grep "Architecture"
 # Should output: Architecture: aarch64
 ```
 
-**Method C: Cross-Platform Build (Build ARM64 Image on x86 PC)**
+The repository `docker-compose.yml` publishes `39000:39000` and mounts the named volume `nowen-data` at `/app/server/data`.
 
-If you want to build ARM64 images on an x86 computer and transfer to ARM devices:
+**Cross-platform build**
+
+`build-multiarch.sh` defaults to the image name `cropflre/nowen` and pushes that tag unless `--load` is passed. This fork's supported path is to build where the container will run:
 
 ```bash
-# Clone project
-git clone https://github.com/cropflre/NOWEN.git
-cd NOWEN
-
-# Use multi-arch build script
-chmod +x build-multiarch.sh
-
-# Build and push to Docker Hub (requires docker login first)
-./build-multiarch.sh --tag yourrepo/nowen
-
-# Or build for current architecture only and load locally
-./build-multiarch.sh --load
+docker compose up -d --build
 ```
 
-**Access:** `http://DEVICE_IP:3000`
+or `docker build -t nowen:local .` as in the Docker section above.
+
+**Access:** `http://DEVICE_IP:39000`
 
 #### ARM64 Performance Tips
 
@@ -839,7 +720,7 @@ chmod +x build-multiarch.sh
 
 **Q: `docker pull` shows `no matching manifest for linux/arm64`?**
 
-A: The ARM64 image version may not be published yet. Use Method B to build locally on the device.
+A: This fork does not use a published Hub image. Build on the device with `docker compose up -d --build`.
 
 **Q: `npm install` is very slow during build?**
 
@@ -862,24 +743,31 @@ A: Ensure `privileged: true` is set and `/sys` is mounted. Temperature node path
 
 | Port | Purpose                              |
 | ---- | ------------------------------------ |
-| 3000 | Web UI (Nginx reverse proxies both frontend and API) |
-| 3001 | Backend API (internal port, no need to expose) |
+| 39000 | Web UI (Nginx reverse proxies both frontend and API) |
+| 39001 | Backend API (internal port, no need to expose) |
 
-> NOWEN uses Nginx to serve both the frontend and API on port 3000. **You only need to map port 3000**.
+> NOWEN uses Nginx to serve both the frontend and API on port 39000. **You only need to map port 39000**. `docker-compose.yml` publishes `39000:39000`. The image sets `PORT=39001` for Express.
 
 ### Data Persistence
 
 Database file is located at `/app/server/data/zen-garden.db` inside the container.
 
-**Warning**: You MUST map this directory to a fixed host path, otherwise data will be lost when the container is recreated/updated!
+`docker-compose.yml` keeps that directory on the named volume `nowen-data`:
 
 ```yaml
+services:
+  nowen:
+    volumes:
+      - nowen-data:/app/server/data
+
 volumes:
-  # Recommended: use host bind mount (data survives container updates)
-  - ./nowen-data:/app/server/data
-  # Or NAS users specify an absolute path
-  # - /volume1/docker/nowen/data:/app/server/data
+  nowen-data:
+    name: nowen-data
 ```
+
+`docker compose down` keeps this volume unless you pass `-v`.
+
+NAS Docker UIs that ignore the Compose named volume may need an explicit host path instead, for example `/volume1/docker/nowen/data:/app/server/data`. Pin that path yourself. "Auto configure storage" can create a new empty directory when the container is recreated.
 
 > **NAS Users Note**: UGREEN/fnOS and other NAS Docker UIs with "auto configure storage" may not reuse old data volumes when updating containers. Always manually specify a host path. NOWEN has built-in triple data protection: auto-backup on startup, process exit save, and 30-second periodic flush.
 
@@ -922,7 +810,7 @@ privileged: true
 | Variable                  | Default    | Description              |
 | ------------------------- | ---------- | ------------------------ |
 | NODE_ENV                  | production | Runtime environment      |
-| PORT                      | 3001       | Backend port (usually no need to change) |
+| PORT                      | 39001      | Backend port (set in the Dockerfile and Compose; usually no need to change) |
 | SI_FILESYSTEM_DISK_PREFIX | /host      | Filesystem path prefix   |
 | PROC_PATH                 | /host/proc | proc filesystem path     |
 | SYS_PATH                  | /host/sys  | sys filesystem path      |
@@ -1076,23 +964,21 @@ A: NOWEN has low hardware requirements. Recommended configurations:
 
 **Q: Docker build fails?**
 
-A: Use pre-built image from Docker Hub:
-
-```bash
-docker pull cropflre/nowen:latest
-```
+A: This fork builds from source. Re-run `docker compose up -d --build` from a fresh clone of `https://github.com/pxdust/NOWEN` and read the build log. There is no `cropflre/nowen` image to fall back to.
 
 **Q: Cannot access after container starts?**
 
-A: Check if ports are occupied:
+A: Check if port 39000 is occupied:
 
 ```bash
-lsof -i :3000
+lsof -i :39000
 ```
+
+The web UI is `http://localhost:39000`.
 
 **Q: Data lost after update?**
 
-A: Ensure you have configured the data volume mount correctly. The database is in `/app/server/data`. Use a bind mount like `./nowen-data:/app/server/data`. NAS Docker UI "auto configure storage" may not reuse old volumes during container updates — always manually specify the host path.
+A: The database is in `/app/server/data`. The repository Compose file mounts the named volume `nowen-data` there. NAS Docker UI "auto configure storage" may not reuse old volumes during container updates — pin `nowen-data` or a fixed host path such as `/your/path:/app/server/data`.
 
 ### System Monitoring Issues
 
@@ -1147,14 +1033,12 @@ A:
 > ⚠️ **Backup your data before updating!** Especially if you're using NAS built-in Docker GUI tools, the update process may cause data loss.
 
 ```bash
-# 1. Backup data first (important!)
-cp -r ./nowen-data ./nowen-data-backup-$(date +%Y%m%d)
+# 1. Backup first from Admin → Data Management, or copy zen-garden.db
+#    out of the nowen-data volume (/app/server/data in the container).
 
-# 2. Pull latest image
-docker-compose pull
-
-# 3. Restart container
-docker-compose up -d
+# 2. Update this repository and rebuild
+git pull
+docker compose up -d --build
 ```
 
 ---
@@ -1582,16 +1466,40 @@ docker-compose up -d
 ## 🚀 Quick Start
 
 ```bash
-# Using Docker Hub image (Recommended)
-docker pull cropflre/nowen:latest
-docker run -d -p 3000:3000 -v ./nowen-data:/app/server/data --name nowen cropflre/nowen:latest
+git clone https://github.com/pxdust/NOWEN.git
+cd NOWEN
+docker compose up -d --build
 
 # Access
-# http://localhost:3000
+# http://localhost:39000
 
 # Default admin credentials
 # Username: admin
 # Password: admin123
+```
+
+Plain Docker, matching Compose (`39000:39000`, named volume `nowen-data` at `/app/server/data`):
+
+```bash
+docker build -t nowen:local .
+docker run -d \
+  --name nowen \
+  --restart unless-stopped \
+  --stop-timeout 15 \
+  -p 39000:39000 \
+  -v nowen-data:/app/server/data \
+  -v /:/host:ro \
+  -v /proc:/host/proc:ro \
+  -v /sys:/host/sys:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e NODE_ENV=production \
+  -e PORT=39001 \
+  -e SI_FILESYSTEM_DISK_PREFIX=/host \
+  -e PROC_PATH=/host/proc \
+  -e SYS_PATH=/host/sys \
+  -e FS_PATH=/host \
+  --privileged \
+  nowen:local
 ```
 
 ---
@@ -1643,5 +1551,5 @@ If this project helps you, please give it a ⭐ Star!
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/cropflre">cropflre</a>
+  Fork of <a href="https://github.com/cropflre/NOWEN">cropflre/NOWEN</a> · <a href="https://github.com/pxdust/NOWEN">pxdust/NOWEN</a>
 </p>

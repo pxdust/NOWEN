@@ -4,11 +4,13 @@
 
 集书签管理与系统监控于一体的极简个人导航站。
 
+本仓库是 [cropflre/NOWEN](https://github.com/cropflre/NOWEN) 的 fork。镜像从本仓库源码构建。
+
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Docker-cropflre%2Fnowen-2496ED)](https://hub.docker.com/r/cropflre/nowen)
+[![Docker](https://img.shields.io/badge/Docker-build%20locally-2496ED)](https://github.com/pxdust/NOWEN)
 
 [English](./README_EN.md) · [简体中文](./README.md)
 
@@ -84,15 +86,16 @@
 
 ## 🚀 快速开始
 
-### Docker（推荐）
+镜像从本仓库构建，不需要拉取 Docker Hub 上的 `cropflre/nowen`。
+
+### Docker Compose（推荐）
+
+使用仓库根目录已有的 [`docker-compose.yml`](./docker-compose.yml)：`build: .`，宿主机端口 `39000` 映射到容器内 Nginx，命名卷 `nowen-data` 挂载到 `/app/server/data`。
 
 ```bash
-docker run -d \
-  --name nowen \
-  -p 39000:39000 \
-  -v nowen-data:/app/server/data \
-  --restart unless-stopped \
-  cropflre/nowen:latest
+git clone https://github.com/pxdust/NOWEN.git
+cd NOWEN
+docker compose up -d --build
 ```
 
 打开 <http://localhost:39000>，使用默认账号登录：
@@ -105,32 +108,39 @@ docker run -d \
 
 生产容器内部使用固定端口：Nginx Web 为 `39000`，Express API 为 `39001`。默认只需要映射 Web 端口，`/api` 会由 Nginx 在容器内转发。
 
-### Docker Compose
+### docker build / docker run
 
-```yaml
-services:
-  nowen:
-    image: cropflre/nowen:latest
-    container_name: nowen
-    ports:
-      - "39000:39000"
-    volumes:
-      - nowen-data:/app/server/data
-    restart: unless-stopped
-
-volumes:
-  nowen-data:
-```
+与上面的 Compose 相同：构建本地镜像 `nowen:local`，映射 `39000:39000`，把命名卷 `nowen-data` 挂到 `/app/server/data`。其余参数与 `docker-compose.yml` 一致（宿主机只读挂载、`PORT=39001`、`privileged`、停止宽限 15 秒）。
 
 ```bash
-docker compose up -d
+git clone https://github.com/pxdust/NOWEN.git
+cd NOWEN
+docker build -t nowen:local .
+docker run -d \
+  --name nowen \
+  --restart unless-stopped \
+  --stop-timeout 15 \
+  -p 39000:39000 \
+  -v nowen-data:/app/server/data \
+  -v /:/host:ro \
+  -v /proc:/host/proc:ro \
+  -v /sys:/host/sys:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e NODE_ENV=production \
+  -e PORT=39001 \
+  -e SI_FILESYSTEM_DISK_PREFIX=/host \
+  -e PROC_PATH=/host/proc \
+  -e SYS_PATH=/host/sys \
+  -e FS_PATH=/host \
+  --privileged \
+  nowen:local
 ```
 
 ### 本地开发
 
 ```bash
 # 克隆并安装
-git clone https://github.com/cropflre/NOWEN.git
+git clone https://github.com/pxdust/NOWEN.git
 cd NOWEN
 npm install
 npm --prefix server install
@@ -209,7 +219,7 @@ REST API 详情见 [`server/`](./server) 目录下的路由代码，主要包含
 
 ## 💬 反馈
 
-- 提交 [Issue](https://github.com/cropflre/NOWEN/issues)
+- 提交 [Issue](https://github.com/pxdust/NOWEN/issues)
 - QQ 群：`1093473044`
 
 ## ☕ 赞赏
@@ -223,6 +233,8 @@ REST API 详情见 [`server/`](./server) 目录下的路由代码，主要包含
 ## 📄 许可证
 
 [MIT](./LICENSE) © cropflre
+
+本仓库：[pxdust/NOWEN](https://github.com/pxdust/NOWEN)（fork of [cropflre/NOWEN](https://github.com/cropflre/NOWEN)）
 
 <div align="center">
 
