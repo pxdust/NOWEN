@@ -199,6 +199,15 @@ export function SidebarNav({ items, pinnedCount = 0, className = "" }: SidebarNa
   if (!isVisible) return null;
 
   return (
+    <>
+    {viewMode === "expanded" && (
+      <button
+        type="button"
+        aria-label={t("sidebar.collapse_to_orb")}
+        className="fixed inset-0 z-30 hidden bg-black/20 lg:block"
+        onClick={() => updateViewMode("orb")}
+      />
+    )}
     <motion.div
       className={`fixed left-4 top-1/2 -translate-y-1/2 z-40 hidden lg:block ${className}`}
       style={{ maxHeight: "calc(100vh - 2rem)" }}
@@ -509,5 +518,6 @@ export function SidebarNav({ items, pinnedCount = 0, className = "" }: SidebarNa
         )}
       </AnimatePresence>
     </motion.div>
+    </>
   );
 }

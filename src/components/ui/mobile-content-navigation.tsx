@@ -19,6 +19,9 @@ interface MobileContentNavigationProps {
   matchedCount: number
   onSelectTag: (tag: string | null) => void
   onSelectCategory: (categoryId: string) => void
+  showLauncher?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 type NavigationTab = 'categories' | 'tags'
@@ -108,11 +111,20 @@ export function MobileContentNavigation({
   matchedCount,
   onSelectTag,
   onSelectCategory,
+  showLauncher = true,
+  open: openProp,
+  onOpenChange,
 }: MobileContentNavigationProps) {
   const { i18n } = useTranslation()
   const language = i18n.language.split('-')[0] as keyof typeof COPY
   const copy = COPY[language] || COPY.en
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : uncontrolledOpen
+  const setOpen = (value: boolean) => {
+    if (!isControlled) setUncontrolledOpen(value)
+    onOpenChange?.(value)
+  }
   const [activeTab, setActiveTab] = useState<NavigationTab>(activeTag ? 'tags' : 'categories')
 
   const popularTags = useMemo(() => tags.slice(0, 12), [tags])
@@ -186,6 +198,7 @@ export function MobileContentNavigation({
 
   return (
     <>
+      {showLauncher && (
       <motion.button
         type="button"
         aria-label={copy.open}
@@ -205,11 +218,12 @@ export function MobileContentNavigation({
           {activeTag ? matchedCount : tags.length > 99 ? '99+' : tags.length}
         </span>
       </motion.button>
+      )}
 
       <AnimatePresence>
         {open && (
           <motion.div
-            className="fixed inset-0 z-[80] lg:hidden"
+            className="fixed inset-0 z-[85] lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

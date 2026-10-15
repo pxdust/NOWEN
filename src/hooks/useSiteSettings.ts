@@ -44,7 +44,7 @@ export const defaultSiteSettings: SiteSettings = {
     overlay: 30,
   },
   cardViewMode: 'standard',
-  widgetSizeMode: 'M',
+  widgetSizeMode: 'S',
   accessMode: 'public',
   defaultBookmarkVisibility: 'public',
   enableQuickNotes: true,
@@ -92,7 +92,7 @@ export function useSiteSettings() {
   const cardViewMode = siteSettings.cardViewMode ?? 'standard';
 
   // 监控 Widget 尺寸模式
-  const widgetSizeMode = siteSettings.widgetSizeMode ?? 'M';
+  const widgetSizeMode = siteSettings.widgetSizeMode ?? 'S';
 
   // 访问模式
   const accessMode = siteSettings.accessMode ?? 'public';

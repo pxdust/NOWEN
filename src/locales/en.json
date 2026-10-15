@@ -118,6 +118,7 @@
   },
   "monitor": {
     "title": "System Monitor",
+    "section": "System",
     "engine_room": "Engine Room",
     "hardware_identity": "Hardware Identity",
     "vital_signs": "Vital Signs",
@@ -212,7 +213,10 @@
       "about": "About",
       "about_full": "About Project",
       "settings": "Settings",
-      "settings_full": "System Settings"
+      "settings_full": "System Settings",
+      "group_content": "Content",
+      "group_observe": "Observe",
+      "group_system": "System"
     },
     "stats": {
       "total_bookmarks": "{{count}} bookmarks",

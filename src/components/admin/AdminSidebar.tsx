@@ -49,6 +49,12 @@ const navItems = [
   { id: 'settings' as AdminTabType, labelKey: 'admin.nav.settings', fullLabelKey: 'admin.nav.settings_full', icon: Settings },
 ]
 
+const navGroups = [
+  { id: 'content', labelKey: 'admin.nav.group_content', ids: ['bookmarks', 'categories', 'tags', 'quotes', 'icons'] as AdminTabType[] },
+  { id: 'observe', labelKey: 'admin.nav.group_observe', ids: ['analytics', 'health-check', 'logs'] as AdminTabType[] },
+  { id: 'system', labelKey: 'admin.nav.group_system', ids: ['backup', 'docs', 'about', 'settings'] as AdminTabType[] },
+]
+
 // 液态动画配置 - 如同在蜂蜜中滑动
 const LIQUID_SPRING = {
   // 胶囊滑动 - 极强阻尼，像穿过蜂蜜
@@ -358,17 +364,28 @@ export function AdminSidebar({
         </div>
 
         {/* Navigation - 能量带导航 */}
-        <nav className="relative flex-1 p-4 space-y-1">
-          {navItems.map((item, index) => (
-            <NavItem
-              key={item.id}
-              item={item}
-              isActive={activeTab === item.id}
-              count={getCount(item.id)}
-              onClick={() => onTabChange(item.id)}
-              index={index}
-              t={t}
-            />
+        <nav className="relative flex-1 overflow-y-auto p-4 space-y-1">
+          {navGroups.map((group) => (
+            <div key={group.id} className="pt-3 first:pt-0">
+              <p className="px-4 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white/40">
+                {t(group.labelKey)}
+              </p>
+              {group.ids.map((id) => {
+                const item = navItems.find((entry) => entry.id === id)
+                if (!item) return null
+                return (
+                  <NavItem
+                    key={item.id}
+                    item={item}
+                    isActive={activeTab === item.id}
+                    count={getCount(item.id)}
+                    onClick={() => onTabChange(item.id)}
+                    index={navItems.findIndex((entry) => entry.id === id)}
+                    t={t}
+                  />
+                )
+              })}
+            </div>
           ))}
         </nav>
 
@@ -466,58 +483,66 @@ export function AdminSidebar({
                 transition={LIQUID_SPRING.breath}
               />
               
-              <nav className="space-y-1">
-                {navItems.map((item) => {
-                  const isActive = activeTab === item.id
-                  const count = getCount(item.id)
-                  
-                  return (
-                    <motion.button
-                      key={item.id}
-                      onClick={() => handleTabChange(item.id)}
-                      whileTap={{ scale: 0.98 }}
-                      className="relative w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                      aria-current={isActive ? 'page' : undefined}
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="mobileGlowingCapsule"
-                          initial={false}
-                          className="absolute inset-0 rounded-xl bg-white/[0.04] border border-white/[0.08]"
-                          transition={LIQUID_SPRING.capsule}
-                        />
-                      )}
-                      <item.icon 
-                        className="w-5 h-5 relative z-10"
-                        style={{ 
-                          color: isActive ? 'rgba(0,242,254,0.9)' : 'rgba(255,255,255,0.6)',
-                          ...a11yTextShadow.icon,
-                        }}
-                      />
-                      <span 
-                        className="font-medium text-sm relative z-10"
-                        style={{ 
-                          color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.7)',
-                          ...a11yTextShadow.primary,
-                        }}
-                      >
-                        {t(item.fullLabelKey)}
-                      </span>
-                      {count !== null && (
-                        <span 
-                          className="ml-auto text-xs px-2 py-0.5 rounded-full relative z-10"
-                          style={{
-                            background: isActive ? 'rgba(0,242,254,0.15)' : 'rgba(255,255,255,0.08)',
-                            color: isActive ? 'rgba(0,242,254,0.95)' : 'rgba(255,255,255,0.5)',
-                            ...a11yTextShadow.secondary,
-                          }}
+              <nav className="max-h-[70vh] space-y-1 overflow-y-auto">
+                {navGroups.map((group) => (
+                  <div key={group.id} className="pt-3 first:pt-0">
+                    <p className="px-4 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white/40">
+                      {t(group.labelKey)}
+                    </p>
+                    {group.ids.map((id) => {
+                      const item = navItems.find((entry) => entry.id === id)
+                      if (!item) return null
+                      const isActive = activeTab === item.id
+                      const count = getCount(item.id)
+                      return (
+                        <motion.button
+                          key={item.id}
+                          onClick={() => handleTabChange(item.id)}
+                          whileTap={{ scale: 0.98 }}
+                          className="relative w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
+                          aria-current={isActive ? 'page' : undefined}
                         >
-                          {count}
-                        </span>
-                      )}
-                    </motion.button>
-                  )
-                })}
+                          {isActive && (
+                            <motion.div
+                              layoutId="mobileGlowingCapsule"
+                              initial={false}
+                              className="absolute inset-0 rounded-xl bg-white/[0.04] border border-white/[0.08]"
+                              transition={LIQUID_SPRING.capsule}
+                            />
+                          )}
+                          <item.icon
+                            className="w-5 h-5 relative z-10"
+                            style={{
+                              color: isActive ? 'rgba(0,242,254,0.9)' : 'rgba(255,255,255,0.6)',
+                              ...a11yTextShadow.icon,
+                            }}
+                          />
+                          <span
+                            className="font-medium text-sm relative z-10"
+                            style={{
+                              color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.7)',
+                              ...a11yTextShadow.primary,
+                            }}
+                          >
+                            {t(item.fullLabelKey)}
+                          </span>
+                          {count !== null && (
+                            <span
+                              className="ml-auto text-xs px-2 py-0.5 rounded-full relative z-10"
+                              style={{
+                                background: isActive ? 'rgba(0,242,254,0.15)' : 'rgba(255,255,255,0.08)',
+                                color: isActive ? 'rgba(0,242,254,0.95)' : 'rgba(255,255,255,0.5)',
+                                ...a11yTextShadow.secondary,
+                              }}
+                            >
+                              {count}
+                            </span>
+                          )}
+                        </motion.button>
+                      )
+                    })}
+                  </div>
+                ))}
               </nav>
 
               <div className="mt-4 pt-4 space-y-1 border-t border-white/[0.04]">

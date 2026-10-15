@@ -10,9 +10,10 @@ interface WeatherDisplayProps {
   onRefresh: () => void;
   weatherCity?: string;
   onCityChange?: (city: string) => void;
+  compact?: boolean;
 }
 
-export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCityChange }: WeatherDisplayProps) {
+export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCityChange, compact = false }: WeatherDisplayProps) {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -71,42 +72,44 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
   return (
     <div className="relative inline-block" ref={panelRef}>
       <motion.div
-        className="mt-4 inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-xl cursor-pointer select-none"
+        className={compact
+          ? 'inline-flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer select-none'
+          : 'mt-4 inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-xl cursor-pointer select-none'}
         style={{
           background: 'var(--color-glass)',
           border: '1px solid var(--color-glass-border)',
         }}
-        initial={{ opacity: 0, y: 10 }}
+        initial={compact ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: compact ? 0 : 0.3 }}
         onClick={() => weather.forecast.length > 0 && setIsExpanded(!isExpanded)}
       >
-        {/* 天气图标和温度 */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="text-xl sm:text-2xl">{getWeatherIcon(weather.icon)}</span>
-          <span className="text-lg sm:text-xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
-            {weather.temperature}°C
+        <div className="flex items-center gap-1.5">
+          <span className={compact ? 'text-base leading-none' : 'text-xl sm:text-2xl'}>{getWeatherIcon(weather.icon)}</span>
+          <span className={compact ? 'text-sm font-medium' : 'text-lg sm:text-xl font-medium'} style={{ color: 'var(--color-text-primary)' }}>
+            {weather.temperature}°
           </span>
         </div>
 
-        {/* 分隔线 */}
-        <div className="w-px h-5 sm:h-6" style={{ background: 'var(--color-glass-border)' }} />
-
-        {/* 天气详情 */}
-        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
-          <span style={{ color: 'var(--color-text-secondary)' }}>{weather.description}</span>
-          <span className="flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
-            <Droplets className="w-3 h-3" />
-            {weather.humidity}%
-          </span>
-          <span
-            className="hidden sm:flex items-center gap-1"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            <Wind className="w-3 h-3" />
-            {weather.windSpeed}m/s
-          </span>
-        </div>
+        {!compact && (
+          <>
+            <div className="w-px h-5 sm:h-6" style={{ background: 'var(--color-glass-border)' }} />
+            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+              <span style={{ color: 'var(--color-text-secondary)' }}>{weather.description}</span>
+              <span className="flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
+                <Droplets className="w-3 h-3" />
+                {weather.humidity}%
+              </span>
+              <span
+                className="hidden sm:flex items-center gap-1"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                <Wind className="w-3 h-3" />
+                {weather.windSpeed}m/s
+              </span>
+            </div>
+          </>
+        )}
 
         {/* 城市 - 可点击编辑 */}
         <AnimatePresence mode="wait">

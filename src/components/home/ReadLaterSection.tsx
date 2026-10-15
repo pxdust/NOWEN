@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   BookMarked,
@@ -10,7 +10,6 @@ import {
   Clock,
   X,
 } from 'lucide-react';
-import { Card3D, CardItem } from '../ui/3d-card';
 import { Bookmark } from '../../types/bookmark';
 import { visitsApi } from '../../lib/api';
 import { useNetworkEnv, getBookmarkUrl } from '../../hooks/useNetworkEnv';
@@ -55,9 +54,9 @@ function HeroBookmark({
     onRemove?.(bookmark.id);
   }, [bookmark.id, onRemove]);
 
-  // 精简模式
-  if (isLiteMode) {
-    return (
+  // 展开后的头图卡。不用 3D，路由器上不值得。
+  void isLiteMode;
+  return (
       <div
         className="group relative p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-lg overflow-hidden"
         style={{
@@ -87,6 +86,15 @@ function HeroBookmark({
                   <BookMarked className="w-3 h-3" />
                   {t('readLater.title')}
                 </span>
+                <button
+                  type="button"
+                  className="ml-auto rounded-lg p-1.5"
+                  style={{ color: 'var(--color-text-muted)' }}
+                  title={t('readLater.remove')}
+                  onClick={handleRemove}
+                >
+                  <X className="h-4 w-4" />
+                </button>
                 {totalCount > 1 && (
                   <span 
                     className="text-xs px-2 py-0.5 rounded-full"
@@ -161,133 +169,6 @@ function HeroBookmark({
           </div>
         </div>
       </div>
-    );
-  }
-
-  // 完整模式 - 3D 卡片
-  return (
-    <Card3D className="cursor-pointer" glowColor="rgba(251, 146, 60, 0.3)">
-      <div className="relative p-6 md:p-8" onClick={handleClick}>
-        {/* 移除按钮 */}
-        <motion.button
-          className="absolute top-4 right-4 z-20 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ background: 'var(--color-glass-hover)' }}
-          onClick={handleRemove}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <X className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
-        </motion.button>
-
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* 图片区域 */}
-          {bookmark.ogImage && (
-            <CardItem
-              translateZ={30}
-              className="w-full md:w-2/5 aspect-[16/10] rounded-xl overflow-hidden flex-shrink-0"
-            >
-              <img 
-                src={bookmark.ogImage} 
-                alt="" 
-                className="w-full h-full object-cover" 
-              />
-            </CardItem>
-          )}
-          
-          {/* 内容区域 */}
-          <div className="flex-1 flex flex-col justify-between min-w-0">
-            <div>
-              {/* 标签行 */}
-              <CardItem translateZ={40}>
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/15 text-orange-400 text-xs font-medium">
-                    <BookMarked className="w-3 h-3" />
-                    {t('readLater.title')}
-                  </span>
-                  {totalCount > 1 && (
-                    <span 
-                      className="text-xs px-2.5 py-1 rounded-full"
-                      style={{ 
-                        background: 'var(--color-glass-hover)',
-                        color: 'var(--color-text-muted)',
-                      }}
-                    >
-                      +{totalCount - 1} {t('readLater.more')}
-                    </span>
-                  )}
-                </div>
-              </CardItem>
-              
-              {/* 标题 */}
-              <CardItem translateZ={50}>
-                <h2
-                  className="text-2xl md:text-3xl font-serif font-medium mb-3 line-clamp-2"
-                  style={{ color: 'var(--color-text-primary)' }}
-                >
-                  {bookmark.title}
-                </h2>
-              </CardItem>
-              
-              {/* 描述 */}
-              {bookmark.description && (
-                <CardItem translateZ={30}>
-                  <p 
-                    className="line-clamp-2 mb-4"
-                    style={{ color: 'var(--color-text-secondary)' }}
-                  >
-                    {bookmark.description}
-                  </p>
-                </CardItem>
-              )}
-              
-              {/* 来源和时间 */}
-              <CardItem translateZ={20}>
-                <div className="flex items-center gap-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                  <span>{domain}</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {new Date(bookmark.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </CardItem>
-            </div>
-            
-            {/* 操作按钮 */}
-            <CardItem translateZ={40} className="mt-6">
-              <div className="flex items-center gap-3">
-                <motion.button
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors"
-                  style={{ 
-                    background: 'var(--color-glass-hover)',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                  onClick={handleMarkRead}
-                  whileHover={{ scale: 1.02, background: 'var(--color-glass-active)' }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  {t('readLater.markRead')}
-                </motion.button>
-                
-                <motion.button
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-white flex items-center gap-2"
-                  style={{ 
-                    background: 'linear-gradient(135deg, var(--gradient-1), var(--gradient-2))',
-                  }}
-                  onClick={handleClick}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {t('readLater.startReading')}
-                  <ExternalLink className="w-4 h-4" />
-                </motion.button>
-              </div>
-            </CardItem>
-          </div>
-        </div>
-      </div>
-    </Card3D>
   );
 }
 
@@ -407,107 +288,86 @@ export function ReadLaterSection({
 }: ReadLaterSectionProps) {
   const { t } = useTranslation();
   const { isInternal } = useNetworkEnv();
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  // 过滤未读的稍后阅读书签
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const unreadBookmarks = bookmarks.filter(b => b.isReadLater && !b.isRead);
-  
-  // 如果没有稍后阅读书签，直接隐藏整个区域
-  if (unreadBookmarks.length === 0) {
-    return null;
-  }
-  
+  if (unreadBookmarks.length === 0) return null;
+
   const heroBookmark = unreadBookmarks[0];
   const restBookmarks = unreadBookmarks.slice(1);
-  const hasMore = restBookmarks.length > 0;
-  // 默认收起时不显示列表，展开时显示全部
-  const displayRestBookmarks = isExpanded ? restBookmarks : [];
-  const hiddenCount = restBookmarks.length;
+  let domain = heroBookmark.url;
+  try {
+    domain = new URL(heroBookmark.url).hostname.replace('www.', '');
+  } catch {
+    domain = heroBookmark.url;
+  }
 
   return (
-    <motion.section
-      className="mb-12"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.8 }}
-    >
-      {/* Hero 卡片 */}
-      <HeroBookmark
-        bookmark={heroBookmark}
-        totalCount={unreadBookmarks.length}
-        isLiteMode={isLiteMode}
-        onMarkRead={onMarkRead}
-        onRemove={onRemove}
-      />
-      
-      {/* 更多列表 */}
-      <AnimatePresence>
-        {hasMore && (
-          <motion.div
-            className="mt-4 space-y-2"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            {/* 分隔标题 - 点击展开/收起 */}
-            <motion.button
-              className="w-full flex items-center gap-3 py-2 group"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              <div className="flex-1 h-px transition-colors group-hover:bg-[var(--color-glass-hover)]" style={{ background: 'var(--color-glass-border)' }} />
-              <div
-                className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full transition-all group-hover:bg-[var(--color-glass-hover)]"
-                style={{ 
-                  background: 'var(--color-glass)',
-                  color: 'var(--color-text-muted)',
-                }}
-              >
-                <span>
-                  {isExpanded 
-                    ? t('readLater.collapse', { count: restBookmarks.length })
-                    : t('readLater.moreToRead', { count: restBookmarks.length })
-                  }
-                </span>
-                <motion.div
-                  animate={{ rotate: isExpanded ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </motion.div>
-              </div>
-              <div className="flex-1 h-px transition-colors group-hover:bg-[var(--color-glass-hover)]" style={{ background: 'var(--color-glass-border)' }} />
-            </motion.button>
-            
-            {/* 列表 - 展开时显示 */}
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div 
-                  className="space-y-2"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {displayRestBookmarks.map((bookmark, index) => (
-                    <ListItem
-                      key={bookmark.id}
-                      bookmark={bookmark}
-                      index={index}
-                      onMarkRead={onMarkRead}
-                      onRemove={onRemove}
-                      onClick={() => {
-                        visitsApi.track(bookmark.id).catch(console.error);
-                        window.open(getBookmarkUrl(bookmark, isInternal), '_blank');
-                      }}
-                    />
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.section>
+    <section className="mb-8" data-section="read-later">
+      <div
+        className="flex items-center gap-2 rounded-xl px-3 py-2"
+        style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
+      >
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          aria-expanded={detailOpen}
+          onClick={() => setDetailOpen((open) => !open)}
+        >
+          <BookMarked className="h-4 w-4 shrink-0 text-orange-400" />
+          <span className="truncate text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            {heroBookmark.title}
+          </span>
+          <span className="hidden truncate text-xs sm:inline" style={{ color: 'var(--color-text-muted)' }}>
+            {domain}
+          </span>
+          {unreadBookmarks.length > 1 && (
+            <span className="shrink-0 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              +{unreadBookmarks.length - 1}
+            </span>
+          )}
+          <ChevronDown
+            className={`ml-auto h-4 w-4 shrink-0 transition-transform ${detailOpen ? 'rotate-180' : ''}`}
+            style={{ color: 'var(--color-text-muted)' }}
+          />
+        </button>
+        <button
+          type="button"
+          title={t('readLater.markRead')}
+          aria-label={t('readLater.markRead')}
+          className="shrink-0 rounded-lg p-1.5"
+          style={{ color: 'var(--color-text-muted)' }}
+          onClick={() => onMarkRead?.(heroBookmark.id)}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      {detailOpen && (
+        <div className="mt-3 space-y-3">
+          <HeroBookmark
+            bookmark={heroBookmark}
+            totalCount={unreadBookmarks.length}
+            isLiteMode={isLiteMode}
+            onMarkRead={onMarkRead}
+            onRemove={onRemove}
+          />
+          {restBookmarks.map((bookmark, index) => (
+            <ListItem
+              key={bookmark.id}
+              bookmark={bookmark}
+              index={index}
+              onMarkRead={onMarkRead}
+              onRemove={onRemove}
+              onClick={() => {
+                visitsApi.track(bookmark.id).catch(console.error);
+                window.open(getBookmarkUrl(bookmark, isInternal), '_blank');
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

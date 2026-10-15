@@ -12,10 +12,8 @@ import {
   LayoutGrid,
   Grid3X3,
   StretchHorizontal,
-  Minimize2,
-  Maximize2,
-  Square,
   Lock,
+  LayoutList,
 } from "lucide-react";
 
 // API
@@ -23,7 +21,6 @@ import { visitsApi, updateSettings } from "./lib/api";
 
 // UI 组件
 import { AuroraBackground } from "./components/ui/aurora-background";
-import { BentoGrid, BentoGridItem } from "./components/ui/bento-grid";
 import { SpotlightCard } from "./components/ui/spotlight-card";
 import { FloatingDock } from "./components/ui/floating-dock";
 import { MobileFloatingDock } from "./components/ui/mobile-floating-dock";
@@ -33,12 +30,10 @@ const AiAssistant = lazy(() =>
   import("./components/ui/ai-assistant").then((m) => ({ default: m.AiAssistant }))
 );
 import { Meteors } from "./components/ui/effects";
-import { BreathingDot } from "./components/ui/advanced-effects";
 import { ScrollToTop } from "./components/ui/scroll-to-top";
 import { SidebarNav } from "./components/ui/sidebar-nav";
 
 // 业务组件
-import { BookmarkCardContent } from "./components/BookmarkCardContent";
 import { ContextMenu, useBookmarkContextMenu } from "./components/ContextMenu";
 const AddBookmarkModal = lazy(() =>
   import("./components/AddBookmarkModal").then((m) => ({ default: m.AddBookmarkModal }))
@@ -58,7 +53,7 @@ import {
   ReadLaterSection,
   EmptyState,
   BookmarkDragOverlay,
-  QuickNotes,
+  SystemWidgetsSection,
 } from "./components/home";
 import { CloudDrawerHost } from "./components/home/notes/CloudDrawerHost";
 import { QuickNotesDrawer } from "./components/home/notes/QuickNotesDrawer";
@@ -66,13 +61,9 @@ import { QuickNotesProvider } from "./hooks/QuickNotesContext";
 import { CloudDrawerProvider } from "./hooks/CloudDrawerContext";
 
 // 监控组件
-const loadMonitors = () => import("./components/monitorBundle");
-const SystemMonitorCard = lazy(() => loadMonitors().then((m) => ({ default: m.SystemMonitorCard })));
-const HardwareIdentityCard = lazy(() => loadMonitors().then((m) => ({ default: m.HardwareIdentityCard })));
-const VitalSignsCard = lazy(() => loadMonitors().then((m) => ({ default: m.VitalSignsCard })));
-const NetworkTelemetryCard = lazy(() => loadMonitors().then((m) => ({ default: m.NetworkTelemetryCard })));
-const ProcessMatrixCard = lazy(() => loadMonitors().then((m) => ({ default: m.ProcessMatrixCard })));
-const SystemMonitor = lazy(() => loadMonitors().then((m) => ({ default: m.SystemMonitor })));
+const SystemMonitor = lazy(() =>
+  import("./components/monitorBundle").then((m) => ({ default: m.SystemMonitor }))
+);
 
 // 页面组件。后台和登录不在首屏路径上。
 const Admin = lazy(() => import("./pages/Admin").then((m) => ({ default: m.Admin })));
@@ -111,6 +102,9 @@ import {
   normalizeTag,
   writeTagToLocation,
 } from "./lib/bookmark-filter";
+import { VIEW_MODE_GRID_CLASS, loadMoreStep } from "./lib/bookmark-grid";
+
+const UNCATEGORIZED_ID = "__uncategorized__";
 
 // 标签颜色：基于名称哈希生成柔和的彩色药丸
 const TAG_COLORS = [
@@ -132,6 +126,7 @@ function getTagColor(name: string) {
 function App() {
   // ========== 状态管理 ==========
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+  const [contentNavOpen, setContentNavOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isQuickNotesDrawerOpen, setIsQuickNotesDrawerOpen] = useState(false);
@@ -211,7 +206,6 @@ function App() {
     categories,
     customIcons,
     isLoading,
-    newlyAddedId,
     addBookmark,
     updateBookmark,
     deleteBookmark,
@@ -518,23 +512,42 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
   );
   const pinnedBookmarks = useMemo(() => visibleBookmarks.filter((b) => b.isPinned), [visibleBookmarks]);
   const allPinnedCount = useMemo(() => bookmarks.filter((b) => b.isPinned).length, [bookmarks]);
+  const categoryIds = useMemo(() => new Set(categories.map((category) => category.id)), [categories]);
 
   const bookmarksByCategory = useMemo(() => categories.reduce((acc, cat) => {
-    const categoryBookmarks = visibleBookmarks.filter((b) => b.category === cat.id);
-    acc[cat.id] = categoryBookmarks.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return a.orderIndex - b.orderIndex;
-    });
+    acc[cat.id] = visibleBookmarks
+      .filter((b) => b.category === cat.id && !b.isPinned)
+      .sort((a, b) => a.orderIndex - b.orderIndex);
     return acc;
   }, {} as Record<string, Bookmark[]>), [visibleBookmarks, categories]);
 
-  const mobileCategoryItems = useMemo(() => categories
-    .map((category) => ({
-      ...category,
-      count: bookmarks.filter((bookmark) => bookmark.category === category.id).length,
-    }))
-    .filter((category) => category.count > 0), [bookmarks, categories]);
+  const uncategorizedBookmarks = useMemo(() => visibleBookmarks
+    .filter((bookmark) => !bookmark.isPinned && (!bookmark.category || !categoryIds.has(bookmark.category)))
+    .sort((a, b) => a.orderIndex - b.orderIndex), [visibleBookmarks, categoryIds]);
+
+  const uncategorizedCategory = useMemo(() => ({
+    id: UNCATEGORIZED_ID,
+    name: t('bookmark.modal.uncategorized'),
+    icon: 'folder',
+    color: '#94a3b8',
+    orderIndex: 9999,
+  }), [t]);
+
+  const mobileCategoryItems = useMemo(() => {
+    const items = categories
+      .map((category) => ({
+        ...category,
+        count: bookmarks.filter((bookmark) => bookmark.category === category.id && !bookmark.isPinned).length,
+      }))
+      .filter((category) => category.count > 0);
+    const uncategorizedCount = bookmarks.filter((bookmark) => !bookmark.isPinned && (!bookmark.category || !categoryIds.has(bookmark.category))).length;
+    if (uncategorizedCount > 0) {
+      items.push({ ...uncategorizedCategory, count: uncategorizedCount });
+    }
+    return items;
+  }, [bookmarks, categories, categoryIds, uncategorizedCategory]);
+
+  const showContentNav = enableSidebarNav && (mobileCategoryItems.length > 0 || tagStats.length > 0 || allPinnedCount > 0);
 
   // ========== 页面路由 ==========
   // 后台登录页面
@@ -790,22 +803,31 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       {/* Sidebar Navigation */}
       {enableSidebarNav && (
         <SidebarNav
-          items={categories
-            .filter((cat) => (bookmarksByCategory[cat.id] || []).length > 0)
-            .map((cat) => ({
-              id: cat.id,
-              name: cat.name,
-              icon: cat.icon,
-              color: cat.color,
-              count: (bookmarksByCategory[cat.id] || []).length,
-            }))}
+          items={[
+            ...categories
+              .filter((cat) => (bookmarksByCategory[cat.id] || []).length > 0)
+              .map((cat) => ({
+                id: cat.id,
+                name: cat.name,
+                icon: cat.icon,
+                color: cat.color,
+                count: (bookmarksByCategory[cat.id] || []).length,
+              })),
+            ...(uncategorizedBookmarks.length > 0 ? [{
+              id: UNCATEGORIZED_ID,
+              name: uncategorizedCategory.name,
+              icon: uncategorizedCategory.icon,
+              color: uncategorizedCategory.color,
+              count: uncategorizedBookmarks.length,
+            }] : []),
+          ]}
           pinnedCount={pinnedBookmarks.length}
         />
       )}
 
       {/* Main Content */}
-      <div className="min-h-screen px-4 sm:px-6 lg:px-8 pb-32">
-        <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-[1440px]">
           {/* Hero Section */}
           <HeroSection
             isLiteMode={isLiteMode}
@@ -819,6 +841,28 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             onRefreshWeather={refreshWeather}
             onCityChange={handleWeatherCityChange}
             onOpenSearch={() => setIsSpotlightOpen(true)}
+            statusExtra={effectiveWidgetVisibility.dockMiniMonitor !== false ? (
+              <div className="hidden md:block">
+                <Suspense fallback={null}>
+                  <SystemMonitor initialMode="mini" size="sm" showLoading={false} storageKey="nowen-statusbar-monitor" />
+                </Suspense>
+              </div>
+            ) : undefined}
+            tabletNav={showContentNav ? (
+              <button
+                type="button"
+                className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg md:inline-flex lg:hidden"
+                style={{
+                  background: 'var(--color-glass)',
+                  border: '1px solid var(--color-glass-border)',
+                  color: activeTag ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                }}
+                aria-label={t('mobileNavigation.open', '打开分类和标签导航')}
+                onClick={() => setContentNavOpen(true)}
+              >
+                <LayoutList className="h-4 w-4" />
+              </button>
+            ) : undefined}
           />
 
           {activeTag && (
@@ -864,151 +908,56 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
 
           {/* Quick Notes / 灵感速记 — 从首页移除，现以抽屉形式由 dock 触发 */}
 
-          {/* Pinned Bookmarks - Bento Grid */}
-          {pinnedBookmarks.length > 0 ? (
-            <motion.section
-              className="mb-12"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              data-section="pinned"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="relative">
-                  <Pin className="w-5 h-5 text-yellow-400" />
-                  <BreathingDot color="#eab308" size="sm" className="absolute -top-1 -right-1" />
-                </div>
-                <h2 className="text-xl font-medium tracking-wide" style={{ color: "var(--color-text-primary)" }}>
-                  常用
-                </h2>
-                <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                  {pinnedBookmarks.length}
-                </span>
-                {/* Widget 尺寸 S/M/L 切换 */}
-                {(effectiveWidgetVisibility.systemMonitor !== false || effectiveWidgetVisibility.hardwareIdentity !== false || effectiveWidgetVisibility.vitalSigns !== false || effectiveWidgetVisibility.networkTelemetry !== false || effectiveWidgetVisibility.processMatrix !== false) && (
-                  <div className="ml-auto">
-                    <WidgetSizeModeToggle widgetSizeMode={widgetSizeMode} onChange={handleWidgetSizeModeChange} />
-                  </div>
-                )}
-              </div>
-
-              <BentoGrid>
-                {/* System Monitor Cards */}
-                {effectiveWidgetVisibility.systemMonitor !== false && (
-                  <BentoGridItem key="system-monitor" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.15)"} delay={0}>
-                    <Suspense fallback={null}>
-                      <SystemMonitorCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.hardwareIdentity !== false && (
-                  <BentoGridItem key="hardware-specs" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.1)"} delay={0.1}>
-                    <Suspense fallback={null}>
-                      <HardwareIdentityCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.vitalSigns !== false && (
-                  <BentoGridItem key="vital-signs" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.12)"} delay={0.15}>
-                    <Suspense fallback={null}>
-                      <VitalSignsCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.networkTelemetry !== false && (
-                  <BentoGridItem key="network-telemetry" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(168, 85, 247, 0.12)"} delay={0.2}>
-                    <Suspense fallback={null}>
-                      <NetworkTelemetryCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.processMatrix !== false && (
-                  <BentoGridItem key="process-matrix" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(34, 197, 94, 0.12)"} delay={0.25}>
-                    <Suspense fallback={null}>
-                      <ProcessMatrixCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-
-                {pinnedBookmarks.map((bookmark, index) => (
-                  <BentoGridItem
-                    key={bookmark.id}
-                    colSpan={1}
-                    rowSpan={1}
-                    spotlightColor={isLiteMode ? undefined : "rgba(234, 179, 8, 0.15)"}
-                    onClick={() => { visitsApi.track(bookmark.id).catch(console.error); window.open(getBookmarkUrl(bookmark, isInternal), "_blank") }}
-                    onContextMenu={(e) => handleContextMenu(e, bookmark)}
-                    delay={(index + 2) * 0.05}
-                  >
-                    <BookmarkCardContent
-                      bookmark={bookmark}
-                      isLarge={false}
-                      isNew={bookmark.id === newlyAddedId}
-                      isLoggedIn={isLoggedIn}
-                      onTogglePin={() => togglePin(bookmark.id)}
-                      onToggleReadLater={() => toggleReadLater(bookmark.id)}
-                      onEdit={() => {
-                        setEditingBookmark(bookmark);
-                        setIsAddModalOpen(true);
-                      }}
-                      onDelete={() => handleDelete(bookmark.id)}
-                      onTagSelect={handleTagSelect}
-                    />
-                  </BentoGridItem>
-                ))}
-              </BentoGrid>
-            </motion.section>
-          ) : (
-            /* 独立显示系统监控卡片 */
-            <motion.section className="mb-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
-              {/* Widget 尺寸 S/M/L 切换 */}
-              {(effectiveWidgetVisibility.systemMonitor !== false || effectiveWidgetVisibility.hardwareIdentity !== false || effectiveWidgetVisibility.vitalSigns !== false || effectiveWidgetVisibility.networkTelemetry !== false || effectiveWidgetVisibility.processMatrix !== false) && (
-                <div className="flex items-center justify-end mb-4">
-                  <WidgetSizeModeToggle widgetSizeMode={widgetSizeMode} onChange={handleWidgetSizeModeChange} />
-                </div>
-              )}
-              <BentoGrid>
-                {effectiveWidgetVisibility.systemMonitor !== false && (
-                  <BentoGridItem key="system-monitor-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.15)"} delay={0}>
-                    <Suspense fallback={null}>
-                      <SystemMonitorCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.hardwareIdentity !== false && (
-                  <BentoGridItem key="hardware-specs-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.1)"} delay={0.1}>
-                    <Suspense fallback={null}>
-                      <HardwareIdentityCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.vitalSigns !== false && (
-                  <BentoGridItem key="vital-signs-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(6, 182, 212, 0.12)"} delay={0.15}>
-                    <Suspense fallback={null}>
-                      <VitalSignsCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.networkTelemetry !== false && (
-                  <BentoGridItem key="network-telemetry-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(168, 85, 247, 0.12)"} delay={0.2}>
-                    <Suspense fallback={null}>
-                      <NetworkTelemetryCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-                {effectiveWidgetVisibility.processMatrix !== false && (
-                  <BentoGridItem key="process-matrix-standalone" colSpan={2} rowSpan={widgetSizeMode === 'S' ? 1 : 2} spotlightColor={isLiteMode ? undefined : "rgba(34, 197, 94, 0.12)"} delay={0.25}>
-                    <Suspense fallback={null}>
-                      <ProcessMatrixCard forceCollapsed={widgetSizeMode === 'S' ? true : widgetSizeMode === 'L' ? false : undefined} />
-                    </Suspense>
-                  </BentoGridItem>
-                )}
-              </BentoGrid>
-            </motion.section>
-          )}
-
-          {/* Category Sections - 支持拖拽排序 */}
           <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel} measuring={measuringConfig}>
+            {pinnedBookmarks.length > 0 && (
+              <motion.section
+                className="mb-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                data-section="pinned"
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <Pin className="h-5 w-5 text-yellow-400" />
+                  <h2 className="text-xl font-medium tracking-wide" style={{ color: "var(--color-text-primary)" }}>
+                    {t('sidebar.pinned')}
+                  </h2>
+                  <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+                    {pinnedBookmarks.length}
+                  </span>
+                </div>
+                <SortableContext items={pinnedBookmarks.map((bookmark) => bookmark.id)} strategy={rectSortingStrategy}>
+                  <div className={`${VIEW_MODE_GRID_CLASS[cardViewMode]} relative z-10`}>
+                    {pinnedBookmarks.map((bookmark, index) => (
+                      <MemoizedBookmarkItem
+                        key={bookmark.id}
+                        bookmark={bookmark}
+                        index={index}
+                        category={categories.find((category) => category.id === bookmark.category) ?? {
+                          id: 'pinned',
+                          name: t('sidebar.pinned'),
+                          icon: 'Pin',
+                          color: '#eab308',
+                          orderIndex: -1,
+                        }}
+                        isLiteMode={isLiteMode}
+                        isInternal={isInternal}
+                        lightweight={visibleBookmarks.length > 50}
+                        cardViewMode={cardViewMode}
+                        onContextMenu={handleContextMenu}
+                        onTagSelect={handleTagSelect}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </motion.section>
+            )}
+
+            <SystemWidgetsSection
+              visibility={effectiveWidgetVisibility}
+              widgetSizeMode={widgetSizeMode}
+              onWidgetSizeModeChange={handleWidgetSizeModeChange}
+            />
+
             {categories.map((category, catIndex) => {
               const categoryBookmarks = bookmarksByCategory[category.id] || [];
               if (categoryBookmarks.length === 0) return null;
@@ -1038,6 +987,26 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
               );
             })}
 
+            {uncategorizedBookmarks.length > 0 && (
+              <CategorySection
+                key={UNCATEGORIZED_ID}
+                category={uncategorizedCategory}
+                categoryBookmarks={uncategorizedBookmarks}
+                catIndex={categories.length}
+                isLiteMode={isLiteMode}
+                isInternal={isInternal}
+                totalBookmarkCount={visibleBookmarks.length}
+                collapseThreshold={categoryCollapseThreshold}
+                initialShowCount={categoryInitialShowCount}
+                cardViewMode={cardViewMode}
+                onContextMenu={handleContextMenu}
+                onEditCategory={() => {}}
+                onViewModeChange={handleCardViewModeChange}
+                onTagSelect={handleTagSelect}
+                isLoggedIn={false}
+              />
+            )}
+
             {/* 拖拽覆盖层 */}
             <BookmarkDragOverlay activeBookmark={activeBookmark} cardViewMode={cardViewMode} />
           </DndContext>
@@ -1045,7 +1014,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           {/* Empty State */}
           {activeTag && visibleBookmarks.length === 0 && !isLoading && (
             <motion.div
-              className="mb-12 flex flex-col items-center justify-center rounded-3xl px-6 py-14 text-center"
+              className="mb-8 flex flex-col items-center justify-center rounded-3xl px-6 py-14 text-center"
               style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1193,6 +1162,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
         matchedCount={visibleBookmarks.length}
         onSelectTag={handleTagSelect}
         onSelectCategory={handleMobileCategorySelect}
+        showLauncher={false}
+        open={contentNavOpen}
+        onOpenChange={setContentNavOpen}
       />
     )}
 
@@ -1206,16 +1178,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       />
     </div>
 
-    {/* 桌面端迷你监控 — 固定位置 */}
-    {effectiveWidgetVisibility.dockMiniMonitor !== false && (
-      <div className="hidden md:flex fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-        <Suspense fallback={null}>
-          <SystemMonitor initialMode="mini" size="sm" showLoading={false} />
-        </Suspense>
-      </div>
-    )}
-
-    {/* 移动端：底部固定栏（状态栏 + 能量球） */}
+    {/* 移动端：底部固定栏（状态栏 + 内容导航 + 能量球） */}
     <div className="md:hidden">
       <MobileFloatingDock
           items={filteredDockItems
@@ -1240,6 +1203,12 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             ? <Suspense fallback={null}><SystemMonitor initialMode="inline" compact showLoading={false} /></Suspense>
             : undefined
         }
+        leadingAction={showContentNav ? {
+          label: t('mobileNavigation.open', '打开分类和标签导航'),
+          icon: LayoutList,
+          onClick: () => setContentNavOpen(true),
+          active: Boolean(activeTag),
+        } : undefined}
       />
     </div>
 
@@ -1423,18 +1392,28 @@ const MemoizedBookmarkItem = React.memo(function MemoizedBookmarkItem({
 // ========== 视图模式配置 ==========
 const VIEW_MODE_CONFIG = {
   compact: {
-    gridClass: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3',
+    gridClass: VIEW_MODE_GRID_CLASS.compact,
     skeletonHeight: '64px',
   },
   standard: {
-    gridClass: 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4',
+    gridClass: VIEW_MODE_GRID_CLASS.standard,
     skeletonHeight: '120px',
   },
   comfortable: {
-    gridClass: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5',
+    gridClass: VIEW_MODE_GRID_CLASS.comfortable,
     skeletonHeight: '140px',
   },
 } as const;
+
+function useViewportWidth() {
+  const [width, setWidth] = useState(() => (typeof window === 'undefined' ? 1280 : window.innerWidth));
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return width;
+}
 
 // ========== 分类骨架屏占位 ==========
 function CategorySkeleton({ count, color, cardViewMode = 'standard' }: { count: number; color: string; cardViewMode?: 'compact' | 'standard' | 'comfortable' }) {
@@ -1504,48 +1483,6 @@ function ViewModeToggle({
   );
 }
 
-// ========== Widget 尺寸 S/M/L 切换按钮 ==========
-const WIDGET_SIZE_MODES = [
-  { key: 'S' as const, icon: Minimize2, titleKey: 'monitor.widget_size_small' },
-  { key: 'M' as const, icon: Square, titleKey: 'monitor.widget_size_medium' },
-  { key: 'L' as const, icon: Maximize2, titleKey: 'monitor.widget_size_large' },
-];
-
-function WidgetSizeModeToggle({
-  widgetSizeMode,
-  onChange,
-}: {
-  widgetSizeMode: 'S' | 'M' | 'L';
-  onChange: (mode: 'S' | 'M' | 'L') => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div
-      className="flex items-center rounded-lg p-0.5 gap-0.5"
-      style={{ background: 'var(--color-bg-tertiary)' }}
-    >
-      {WIDGET_SIZE_MODES.map(({ key, icon: Icon, titleKey }) => (
-        <button
-          key={key}
-          onClick={() => onChange(key)}
-          className={`p-1.5 rounded-md transition-all ${
-            widgetSizeMode === key
-              ? 'shadow-sm'
-              : 'hover:bg-white/5'
-          }`}
-          style={{
-            background: widgetSizeMode === key ? 'var(--color-glass)' : 'transparent',
-            color: widgetSizeMode === key ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-          }}
-          title={t(titleKey, key)}
-        >
-          <Icon className="w-3.5 h-3.5" />
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // ========== 分类区组件（支持折叠展开 + 懒渲染） ==========
 function CategorySection({
   category,
@@ -1579,7 +1516,8 @@ function CategorySection({
   isLoggedIn?: boolean;
 }) {
   const { t } = useTranslation();
-  const PAGE_SIZE = 100; // 每次点击加载更多的数量
+  const viewportWidth = useViewportWidth();
+  const pageStep = loadMoreStep(cardViewMode, viewportWidth);
   const baseShowCount = initialShowCount || 8;
   const needsCollapse = collapseThreshold > 0 && categoryBookmarks.length > collapseThreshold;
   const [displayCount, setDisplayCount] = useState(needsCollapse ? baseShowCount : categoryBookmarks.length);
@@ -1610,10 +1548,10 @@ function CategorySection({
   return (
     <motion.section
       ref={isEager ? undefined : lazyRef}
-      className="mb-12 relative group"
+      className="mb-8 relative group"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(1.2 + catIndex * 0.1, 1.8) }}
+      transition={{ duration: isLiteMode ? 0.2 : 0.28, delay: Math.min(catIndex * 0.04, 0.16) }}
       data-category-id={category.id}
     >
       {/* 背景装饰文字 */}
@@ -1626,7 +1564,7 @@ function CategorySection({
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-6 relative z-10">
+      <div className="flex items-center gap-3 mb-3 relative z-10">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-sm"
           style={{ backgroundColor: `${category.color}15`, color: category.color }}
@@ -1680,7 +1618,7 @@ function CategorySection({
       {doRender && needsCollapse && !isFullyExpanded && (
         <div className="flex justify-center mt-4 relative z-10">
           <button
-            onClick={() => setDisplayCount(prev => Math.min(prev + PAGE_SIZE, categoryBookmarks.length))}
+            onClick={() => setDisplayCount(prev => Math.min(prev + pageStep, categoryBookmarks.length))}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 active:scale-95 backdrop-blur-sm"
             style={{
               background: 'var(--color-glass)',

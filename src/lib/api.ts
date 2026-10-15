@@ -800,7 +800,7 @@ export interface SiteSettings {
   menuVisibility?: MenuVisibility  // 菜单项可见性配置
   wallpaper?: WallpaperSettings    // 壁纸设置
   cardViewMode?: 'compact' | 'standard' | 'comfortable'  // 书签卡片视图模式
-  widgetSizeMode?: 'S' | 'M' | 'L'  // 监控 Widget 尺寸预设（S=迷你摘要, M=用户自控, L=全展开）
+  widgetSizeMode?: 'S' | 'M' | 'L'  // 监控 Widget 尺寸预设（S=一行芯片默认, M=展开一张, L=全展开一张）
   enableAiEnrichOnImport?: boolean  // 导入时启用 AI 刮削元数据/标题/图标
   accessMode?: 'public' | 'private'  // 访问模式：public=公开访问，private=私人模式（需登录）
   defaultBookmarkVisibility?: 'public' | 'private'  // 新书签默认可见性
@@ -898,7 +898,7 @@ function parseSettings(raw: Record<string, string>): SiteSettings {
     menuVisibility,
     wallpaper,
     cardViewMode: (raw.cardViewMode as SiteSettings['cardViewMode']) || 'standard',
-    widgetSizeMode: (['S', 'M', 'L'].includes(raw.widgetSizeMode) ? raw.widgetSizeMode : 'M') as SiteSettings['widgetSizeMode'],
+    widgetSizeMode: (['S', 'M', 'L'].includes(raw.widgetSizeMode) ? raw.widgetSizeMode : 'S') as SiteSettings['widgetSizeMode'],
     enableAiEnrichOnImport: raw.enableAiEnrichOnImport === 'true' || raw.enableAiEnrichOnImport === '1',
     accessMode: (raw.accessMode === 'private' ? 'private' : 'public') as SiteSettings['accessMode'],
     defaultBookmarkVisibility: (raw.defaultBookmarkVisibility === 'private' ? 'private' : 'public') as SiteSettings['defaultBookmarkVisibility'],
@@ -958,7 +958,7 @@ export async function updateSettings(settings: SiteSettings): Promise<SiteSettin
     menuVisibility: settings.menuVisibility ? JSON.stringify(settings.menuVisibility) : undefined,
     wallpaper: settings.wallpaper ? JSON.stringify(settings.wallpaper) : undefined,
     cardViewMode: settings.cardViewMode || 'standard',
-    widgetSizeMode: settings.widgetSizeMode || 'M',
+    widgetSizeMode: settings.widgetSizeMode || 'S',
     enableAiEnrichOnImport: settings.enableAiEnrichOnImport ? 'true' : 'false',
     accessMode: settings.accessMode || 'public',
     defaultBookmarkVisibility: settings.defaultBookmarkVisibility || 'public',

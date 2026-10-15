@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Command, ArrowRight, Globe, Github, Plus, ChevronDown } from 'lucide-react'
+import { Search, ArrowRight, Globe, Github, Plus, ChevronDown } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { Bookmark } from '../../types/bookmark'
 import { IconRenderer } from '../IconRenderer'
@@ -145,7 +145,7 @@ export function SpotlightSearch({
   }
 
   // 检测快捷键前缀并获取对应引擎
-  const getEngineFromShortcut = (q: string): { engine: SearchEngine; searchTerm: string } | null => {
+  const getEngineFromShortcut = (q: string): { engine: SearchEngineDisplay; searchTerm: string } | null => {
     for (const engine of SEARCH_ENGINES) {
       if (q.startsWith(engine.shortcut + ' ') && q.length > engine.shortcut.length + 1) {
         return {
@@ -315,7 +315,7 @@ export function SpotlightSearch({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -324,14 +324,14 @@ export function SpotlightSearch({
 
           {/* Spotlight Container */}
           <motion.div
-            className="fixed inset-x-4 top-[15%] z-50 mx-auto max-w-2xl"
+            className="fixed inset-x-4 top-[15%] z-[90] mx-auto max-w-2xl"
             initial={{ opacity: 0, y: -30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           >
             <div 
-              className="relative overflow-hidden rounded-2xl backdrop-blur-2xl shadow-2xl"
+              className="relative flex max-h-[min(85vh,720px)] flex-col overflow-hidden rounded-2xl backdrop-blur-2xl shadow-2xl"
               style={{
                 background: 'var(--color-glass)',
                 border: '1px solid var(--color-glass-border)',
@@ -403,19 +403,18 @@ export function SpotlightSearch({
                   color: 'var(--color-text-muted)',
                 }}
               >
-                <div className="flex items-center gap-4 flex-wrap">
-                  {SEARCH_ENGINES.slice(0, 4).map(engine => (
-                    <span key={engine.id} className="flex items-center gap-1.5">
-                      <kbd 
-                        className="px-1.5 py-0.5 rounded"
-                        style={{ background: 'var(--color-bg-tertiary)' }}
-                      >
-                        {engine.shortcut}
-                      </kbd> {engine.name}
-                    </span>
-                  ))}
-                  <span className="flex items-center gap-1.5">
-                    <Command className="w-3 h-3" /> URL 自动识别
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 rounded" style={{ background: 'var(--color-bg-tertiary)' }}>↑↓</kbd>
+                    导航
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 rounded" style={{ background: 'var(--color-bg-tertiary)' }}>↵</kbd>
+                    确认
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 rounded" style={{ background: 'var(--color-bg-tertiary)' }}>ESC</kbd>
+                    关闭
                   </span>
                 </div>
                 
@@ -467,9 +466,10 @@ export function SpotlightSearch({
                             style={{ color: 'var(--color-text-secondary)' }}
                           >
                             {engine.icon}
-                            <span className="text-sm">{engine.name}</span>
+                            <span className="text-sm flex-1">{engine.name}</span>
+                            <kbd className="text-[10px] opacity-60">{engine.shortcut}</kbd>
                             {engine.id === activeEngine.id && (
-                              <span className="ml-auto text-green-400 text-xs">✓</span>
+                              <span className="text-green-400 text-xs">✓</span>
                             )}
                           </button>
                         ))}
@@ -480,7 +480,7 @@ export function SpotlightSearch({
               </div>
 
               {/* Results */}
-              <div className="max-h-[400px] overflow-y-auto py-2">
+              <div className="max-h-[min(400px,50vh)] overflow-y-auto py-2">
                 {results.map((result, index) => (
                   <motion.button
                     key={result.id}
@@ -535,20 +535,6 @@ export function SpotlightSearch({
                 }}
               >
                 <span>NOWEN</span>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1">
-                    <kbd 
-                      className="px-1 py-0.5 rounded"
-                      style={{ background: 'var(--color-bg-tertiary)' }}
-                    >↑↓</kbd> 导航
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <kbd 
-                      className="px-1 py-0.5 rounded"
-                      style={{ background: 'var(--color-bg-tertiary)' }}
-                    >↵</kbd> 确认
-                  </span>
-                </div>
               </div>
             </div>
           </motion.div>
