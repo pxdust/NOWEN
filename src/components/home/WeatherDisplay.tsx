@@ -166,7 +166,7 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
             <motion.button
               key="display"
               onClick={(e) => { e.stopPropagation(); handleCityClick(); }}
-              className="hidden md:flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
               style={{ color: 'var(--color-text-muted)' }}
               title={onCityChange ? t('weather.click_to_change_city') : undefined}
               initial={{ opacity: 0 }}
