@@ -54,6 +54,7 @@ import {
   EmptyState,
   BookmarkDragOverlay,
   SystemWidgetsSection,
+  PackageUsageSection,
 } from "./components/home";
 import { CloudDrawerHost } from "./components/home/notes/CloudDrawerHost";
 import { QuickNotesDrawer } from "./components/home/notes/QuickNotesDrawer";
@@ -311,6 +312,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       dockMiniMonitor: widgetVisibility.dockMiniMonitorAccess === 'private' ? false : widgetVisibility.dockMiniMonitor,
       mobileTicker: widgetVisibility.mobileTickerAccess === 'private' ? false : widgetVisibility.mobileTicker,
       aiAssistant: widgetVisibility.aiAssistantAccess === 'private' ? false : widgetVisibility.aiAssistant,
+      packageUsage: widgetVisibility.packageUsageAccess === 'public'
+        ? widgetVisibility.packageUsage
+        : (isLoggedIn ? widgetVisibility.packageUsage : false),
     }
   }, [widgetVisibility, isLoggedIn])
 
@@ -951,6 +955,8 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                 </SortableContext>
               </motion.section>
             )}
+
+            {effectiveWidgetVisibility.packageUsage && <PackageUsageSection />}
 
             <SystemWidgetsSection
               visibility={effectiveWidgetVisibility}

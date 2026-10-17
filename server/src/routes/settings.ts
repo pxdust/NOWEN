@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/index.js'
 import { validateBody, updateSettingsSchema } from '../schemas.js'
 import { testConnection, NowenNoteConfig } from '../services/nowenNote.js'
 import { setupWithCredentials, revokeRemoteToken } from '../services/nowenNoteSetup.js'
+import { mergeStoredPackageConfig, publicPackageSettingsValue } from '../services/packageUsage.js'
 
 const router = Router()
 
@@ -33,6 +34,8 @@ function safeShapeSettings(rawList: Array<{ key: string; value: string }>): Reco
       } catch {
         result.nowenNote = ''
       }
+    } else if (s.key === 'packageUsage') {
+      result.packageUsage = publicPackageSettingsValue(s.value)
     } else {
       result[s.key] = s.value
     }
@@ -85,6 +88,23 @@ router.patch('/', authMiddleware, validateBody(updateSettingsSchema), (req: Requ
             : (oldCfg.apiToken || ''),
         }
         const serialized = JSON.stringify(merged)
+        if (existing) {
+          run('UPDATE settings SET value = ?, updatedAt = ? WHERE key = ?', [serialized, now, key])
+        } else {
+          run('INSERT INTO settings (key, value, updatedAt) VALUES (?, ?, ?)', [key, serialized, now])
+        }
+        continue
+      }
+
+      if (key === 'packageUsage') {
+        const existing = queryOne('SELECT value FROM settings WHERE key = ?', ['packageUsage']) as
+          | { value: string }
+          | undefined
+        let incoming: unknown = value
+        if (typeof value === 'string') {
+          try { incoming = JSON.parse(value) } catch { incoming = {} }
+        }
+        const serialized = mergeStoredPackageConfig(existing?.value, incoming)
         if (existing) {
           run('UPDATE settings SET value = ?, updatedAt = ? WHERE key = ?', [serialized, now, key])
         } else {

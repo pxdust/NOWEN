@@ -8,7 +8,8 @@ import {
   Gauge,
   Image,
   Sparkles,
-  Cloud
+  Cloud,
+  Wallet
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { SiteSettingsCard } from './SiteSettingsCard'
@@ -18,11 +19,12 @@ import { WidgetSettingsCard } from './WidgetSettingsCard'
 import { WallpaperSettingsCard } from './WallpaperSettingsCard'
 import { AiSettingsCard } from './AiSettingsCard'
 import { NowenNoteSettingsCard } from './NowenNoteSettingsCard'
+import { PackageUsageSettingsCard } from './PackageUsageSettingsCard'
 import { SiteSettings, WidgetVisibility } from '../../lib/api'
 import { ThemeId } from '../../hooks/useTheme.tsx'
 
 // 设置子标签页类型
-type SettingsTab = 'site' | 'theme' | 'wallpaper' | 'widget' | 'security' | 'ai' | 'sync'
+type SettingsTab = 'site' | 'theme' | 'wallpaper' | 'widget' | 'security' | 'ai' | 'sync' | 'package'
 
 interface SettingsTabItem {
   id: SettingsTab
@@ -90,6 +92,14 @@ const settingsTabs: SettingsTabItem[] = [
     gradient: 'from-violet-500/20 to-indigo-500/20',
     iconBg: 'from-violet-500/20 to-indigo-600/20'
   },
+  { 
+    id: 'package', 
+    labelKey: 'admin.settings.tabs.package', 
+    icon: Wallet, 
+    descKey: 'admin.settings.tabs.package_desc',
+    gradient: 'from-amber-500/20 to-orange-500/20',
+    iconBg: 'from-amber-500/20 to-orange-600/20'
+  },
 ]
 
 interface SettingsPanelProps {
@@ -112,7 +122,7 @@ interface SettingsPanelProps {
   // 仪表设置
   widgetVisibility: WidgetVisibility
   onWidgetVisibilityChange: (visibility: WidgetVisibility) => void
-  onSaveWidgetSettings: () => Promise<void>
+  onSaveWidgetSettings: (next?: WidgetVisibility) => Promise<void>
   isSavingWidgetSettings: boolean
   widgetSettingsSuccess: boolean
   widgetSettingsError: string
@@ -465,6 +475,14 @@ export function SettingsPanel({
               isSaving={isSavingSiteSettings}
               success={siteSettingsSuccess}
               error={siteSettingsError}
+            />
+          )}
+
+          {activeSettingsTab === 'package' && (
+            <PackageUsageSettingsCard
+              visibility={widgetVisibility}
+              onVisibilityChange={onWidgetVisibilityChange}
+              onSaveVisibility={onSaveWidgetSettings}
             />
           )}
         </motion.div>

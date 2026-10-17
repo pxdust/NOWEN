@@ -30,6 +30,8 @@ export const defaultSiteSettings: SiteSettings = {
     dockMiniMonitorAccess: 'public',
     mobileTickerAccess: 'public',
     aiAssistantAccess: 'public',
+    packageUsage: false,
+    packageUsageAccess: 'private',
   },
   menuVisibility: {
     languageToggle: true,
@@ -69,6 +71,8 @@ const hiddenWidgetVisibility = {
   dockMiniMonitorAccess: 'public' as const,
   mobileTickerAccess: 'public' as const,
   aiAssistantAccess: 'public' as const,
+  packageUsage: false,
+  packageUsageAccess: 'private' as const,
 };
 
 export function useSiteSettings() {

@@ -18,6 +18,7 @@ import {
   logsRouter,
   backupRouter,
   notesRouter,
+  packageUsageRouter,
 } from './routes/index.js'
 import { requestLoggerMiddleware } from './routes/logs.js'
 import { initBackupService } from './services/backup.js'
@@ -78,6 +79,7 @@ app.use('/api/ai', aiRouter)
 app.use('/api/logs', logsRouter)
 app.use('/api/backup', backupRouter)
 app.use('/api/notes', notesRouter)
+app.use('/api/package-usage', packageUsageRouter)
 app.use('/api', dataRouter)  // /api/export, /api/import, /api/factory-reset
 
 // ========== 启动服务 ==========
