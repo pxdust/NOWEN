@@ -49,6 +49,7 @@ import {
 import { Bookmark, Category, CustomIcon } from '../types/bookmark'
 import { cn, presetIcons } from '../lib/utils'
 import { adminChangePassword, adminChangeUsername, fetchSettings, updateSettings, SiteSettings, WidgetVisibility, importData, getEnrichStatus, enrichBatch, fetchQuotes, updateQuotes, aiApi } from '../lib/api'
+import { resolveWidgetVisibility } from '../lib/widgetVisibility'
 import type { EnrichMode } from '../lib/api'
 import { AdminSidebar } from '../components/admin/AdminSidebar'
 import { QuotesCard } from '../components/admin/QuotesCard'
@@ -1083,9 +1084,9 @@ function AdminContent() {
     }
   }
 
-  // 保存仪表设置
-  const handleSaveWidgetSettings = async (next?: WidgetVisibility) => {
-    const visibilityToSave = next ?? widgetVisibility
+  // 保存仪表设置。可选参数只接受可见性对象；点击事件等非配置参数回退到当前状态。
+  const handleSaveWidgetSettings = async (next?: unknown) => {
+    const visibilityToSave = resolveWidgetVisibility(next, widgetVisibility)
     setWidgetSettingsError('')
     setWidgetSettingsSuccess(false)
     setIsSavingWidgetSettings(true)

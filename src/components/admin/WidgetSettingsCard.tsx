@@ -462,9 +462,12 @@ export function WidgetSettingsCard({
           </motion.div>
         )}
 
-        {/* 保存按钮 */}
+        {/* 保存按钮。不要把点击事件传给 onSave，保存函数的可选参数是可见性配置。 */}
         <motion.button
-          onClick={onSave}
+          type="button"
+          onClick={() => {
+            void onSave()
+          }}
           disabled={isSaving}
           whileHover={{ scale: isSaving ? 1 : 1.02 }}
           whileTap={{ scale: isSaving ? 1 : 0.98 }}
