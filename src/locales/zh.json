@@ -149,9 +149,13 @@
     "mode": {
       "dailyOnly": "仅日限额",
       "weeklyOnly": "周限额",
-      "dailyInCombo": "日限额",
-      "weeklyInCombo": "周总限额"
+      "dailyInCombo": "每日额度",
+      "weeklyInCombo": "每周额度",
+      "combo": "周日限额"
     },
+    "drag": "拖动套餐",
+    "collapse": "收起套餐",
+    "expand": "展开套餐",
     "unlimited": "不限额",
     "usedUnlimited": "{{used}} · 不限额",
     "daysLeft": "剩余 {{count}} 天",
@@ -653,7 +657,7 @@
         "detail_path_hint": "留空时 NewAPI 使用 /api/subscription/self，并尝试用 /api/subscription/plans 补全套餐名和重置周期",
         "enabled": "首页显示",
         "disabled": "首页隐藏",
-        "shape_hint": "余额来自 /api/user/self 的 quota÷500000。每个套餐按实际返回的字段决定展示：只有周额度显示「周限额」，只有日额度显示「仅日限额」，两者都有则同时显示「日限额」和「周总限额」。limit 为 0 或 unlimited 显示「不限额」，不会编造数字。",
+        "shape_hint": "余额来自 /api/user/self 的 quota÷500000。每个套餐按实际返回的字段决定展示：只有周额度显示「周限额」，只有日额度显示「仅日限额」，日额度与周额度同时存在（或 limit_type 为「周日限额」）时显示「周日限额」，行标题为「每日额度」「每周额度」。不会把「周日限额」当成单独的周限额，也不会编造缺失的数字。limit 为 0 或 unlimited 显示「不限额」。",
         "test": "测试连接",
         "testing": "测试中...",
         "test_ok": "已连通，余额 {{balance}}，套餐 {{count}} 个",

@@ -149,9 +149,13 @@
     "mode": {
       "dailyOnly": "Daily limit only",
       "weeklyOnly": "Weekly limit",
-      "dailyInCombo": "Daily limit",
-      "weeklyInCombo": "Weekly total"
+      "dailyInCombo": "Daily quota",
+      "weeklyInCombo": "Weekly quota",
+      "combo": "Weekly and daily limit"
     },
+    "drag": "Drag package",
+    "collapse": "Collapse package",
+    "expand": "Expand package",
     "unlimited": "Unlimited",
     "usedUnlimited": "{{used}} · Unlimited",
     "daysLeft": "{{count}} days left",
@@ -653,7 +657,7 @@
         "detail_path_hint": "Empty uses /api/subscription/self for NewAPI, plus /api/subscription/plans for plan names and reset periods",
         "enabled": "Show on home",
         "disabled": "Hide on home",
-        "shape_hint": "Balance comes from /api/user/self quota÷500000. Each plan is rendered from the fields that upstream actually returns: weekly only, daily only, or both (daily limit + weekly total). A limit of 0 or unlimited is shown as Unlimited. Missing numbers are not invented.",
+        "shape_hint": "Balance comes from /api/user/self quota÷500000. Each plan is rendered from the fields upstream actually returns: weekly only, daily only, or both (shown as a weekly-and-daily limit, including when limit_type is 周日限额). That combined mode is not labeled as weekly-only, and missing numbers are not invented. A limit of 0 or unlimited is shown as Unlimited.",
         "test": "Test connection",
         "testing": "Testing...",
         "test_ok": "Connected. Balance {{balance}}, {{count}} plans",

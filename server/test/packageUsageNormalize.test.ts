@@ -248,6 +248,81 @@ async function main() {
   assert.equal(replaced.accessToken, 'new-token-9999')
   assert.equal(replaced.userId, '318')
 
+  const weekAndDay = normalizeUsage({
+    userSelf: userSelf(),
+    packagePayload: {
+      packages: [{
+        name: '双休套餐',
+        status: 'active',
+        limit_type: '周日限额',
+        quota_reset_period: 'weekly',
+        amount_used: 999,
+        amount_total: 999,
+        day_used_amount: 27.14,
+        day_limit_amount: 50,
+        week_used_amount: 149.5,
+        week_limit_amount: 250,
+      }],
+    },
+    amountMode: 'money',
+    currency: 'USD',
+    now: NOW,
+  })
+  assert.equal(weekAndDay.packages[0].name, '双休套餐')
+  assert.equal(weekAndDay.packages[0].quotaMode, 'daily_and_weekly')
+  assert.equal(weekAndDay.packages[0].daily?.used, 27.14)
+  assert.equal(weekAndDay.packages[0].daily?.limit, 50)
+  assert.equal(weekAndDay.packages[0].weekly?.used, 149.5)
+  assert.equal(weekAndDay.packages[0].weekly?.limit, 250)
+
+  const comboOnOuter = normalizeUsage({
+    userSelf: userSelf(),
+    packagePayload: {
+      subscriptions: [{
+        limit_type: '周日限额',
+        day_used_amount: 1,
+        day_limit_amount: 2,
+        week_used_amount: 3,
+        week_limit_amount: 4,
+        subscription: {
+          id: 8,
+          status: 'active',
+          name: '外层额度',
+          quota_reset_period: 'weekly',
+          amount_used: 50,
+          amount_total: 80,
+        },
+      }],
+    },
+    amountMode: 'money',
+    currency: 'USD',
+    now: NOW,
+  })
+  assert.equal(comboOnOuter.packages[0].name, '外层额度')
+  assert.equal(comboOnOuter.packages[0].quotaMode, 'daily_and_weekly')
+  assert.equal(comboOnOuter.packages[0].daily?.limit, 2)
+  assert.equal(comboOnOuter.packages[0].weekly?.limit, 4)
+
+  const comboWithoutSplit = normalizeUsage({
+    userSelf: userSelf(),
+    packagePayload: {
+      packages: [{
+        name: '未拆分',
+        status: 'active',
+        limit_type: '周日限额',
+        quota_reset_period: 'weekly',
+        amount_used: 10,
+        amount_total: 20,
+      }],
+    },
+    amountMode: 'money',
+    currency: 'USD',
+    now: NOW,
+  })
+  assert.equal(comboWithoutSplit.packages[0].quotaMode, 'none')
+  assert.equal(comboWithoutSplit.packages[0].daily, undefined)
+  assert.equal(comboWithoutSplit.packages[0].weekly, undefined)
+
   console.log('package usage normalizer ok')
 }
 

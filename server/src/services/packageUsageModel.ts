@@ -8,8 +8,12 @@
  * 每个套餐单独推断额度模式，只输出上游真正给出的窗口：
  * - 只有 weekly → quotaMode=weekly（周限额）
  * - 只有 daily → quotaMode=daily（仅日限额）
- * - 两者都有 → quotaMode=daily_and_weekly（日限额 + 周总限额）
+ * - 两者都有 → quotaMode=daily_and_weekly（周日限额：每日额度 + 每周额度）
  * - 都没有 → quotaMode=none
+ * limit_type / quota_reset_period 为「周日限额」时表示周限额和日限额同时存在，
+ * 不会把单一的 amount_used / amount_total 当成周限额。
+ * 同时识别 day_used_amount、day_limit_amount、week_used_amount、week_limit_amount，
+ * 以及套餐对象外层（不只 subscription 内层）上的这些字段。
  * limit 为 0，或字段标明 unlimited，表示不限额：保留 used（若上游给了），不补进度条用的上限。
  * 缺字段就不输出，调用方不要补 0。
  *
@@ -316,10 +320,36 @@ function quotaModeFor(daily?: PackageQuotaWindow, weekly?: PackageQuotaWindow): 
   return 'none'
 }
 
+/** 周日限额 = 周限额 + 日限额同时存在，不是「仅周日」，也不是单独的周限额。 */
+function classifyPeriod(raw: unknown): 'daily' | 'weekly' | 'combo' | 'other' {
+  const period = text(raw).trim().toLowerCase().replace(/\s+/g, '')
+  if (!period) return 'other'
+  if ([
+    '周日限额',
+    '周+日限额',
+    '周加日限额',
+    '周+日',
+    'week_day',
+    'daily_and_weekly',
+    'day_and_week',
+    'weekly_and_daily',
+  ].includes(period)) return 'combo'
+  if (period.includes('周') && period.includes('日') && !period.includes('仅')) return 'combo'
+  if (['daily', 'day', 'today', '每日', '日限额', '仅日限额', '每日额度', '日'].includes(period)) return 'daily'
+  if (['weekly', 'week', '每周', '周限额', '每周额度', '周', '仅周限额'].includes(period)) return 'weekly'
+  return 'other'
+}
+
 function readWindow(source: unknown, side: 'daily' | 'weekly', mode: AmountMode): PackageQuotaWindow | undefined {
   if (!source || typeof source !== 'object') return undefined
   const record = source as Record<string, unknown>
-  const nested = record[side] ?? record[`${side}Quota`] ?? record[`${side}_quota`]
+  const short = side === 'daily' ? 'day' : 'week'
+  const nested = record[side]
+    ?? record[short]
+    ?? record[`${side}Quota`]
+    ?? record[`${side}_quota`]
+    ?? record[`${short}Quota`]
+    ?? record[`${short}_quota`]
   if (nested && typeof nested === 'object') {
     const box = nested as Record<string, unknown>
     const pair = readPair(
@@ -333,17 +363,17 @@ function readWindow(source: unknown, side: 'daily' | 'weekly', mode: AmountMode)
   }
 
   const usedKeys = side === 'daily'
-    ? ['daily_used', 'daily_used_quota', 'today_used', 'today_used_quota']
-    : ['weekly_used', 'weekly_used_quota', 'week_used', 'week_used_quota']
+    ? ['daily_used', 'daily_used_quota', 'daily_quota_used', 'today_used', 'today_used_quota', 'day_used', 'day_used_amount', 'day_used_quota', 'daily_amount_used', 'used_day']
+    : ['weekly_used', 'weekly_used_quota', 'weekly_quota_used', 'week_used', 'week_used_quota', 'week_used_amount', 'weekly_amount_used', 'used_week']
   const limitKeys = side === 'daily'
-    ? ['daily_limit', 'daily_quota', 'daily_total', 'today_quota', 'today_limit']
-    : ['weekly_limit', 'weekly_quota', 'weekly_total', 'week_quota', 'week_limit']
+    ? ['daily_limit', 'daily_quota', 'daily_total', 'daily_quota_limit', 'today_quota', 'today_limit', 'day_limit', 'day_limit_amount', 'day_quota', 'day_quota_amount', 'daily_amount', 'daily_amount_total']
+    : ['weekly_limit', 'weekly_quota', 'weekly_total', 'weekly_quota_limit', 'week_quota', 'week_limit', 'week_limit_amount', 'week_quota_amount', 'weekly_amount', 'weekly_amount_total']
   const used = usedKeys.map((key) => record[key]).find((value) => num(value) !== null)
   const limit = limitKeys.map((key) => record[key]).find((value) => num(value) !== null)
   const resetKey = side === 'daily'
-    ? record.daily_reset_at ?? record.dailyResetAt ?? record.today_reset_at
+    ? record.daily_reset_at ?? record.dailyResetAt ?? record.today_reset_at ?? record.day_reset_at
     : record.weekly_reset_at ?? record.weeklyResetAt ?? record.week_reset_at
-  const unlimited = isUnlimitedFlag(record[`${side}_unlimited`] ?? record[`${side}Unlimited`])
+  const unlimited = isUnlimitedFlag(record[`${side}_unlimited`] ?? record[`${side}Unlimited`] ?? record[`${short}_unlimited`])
   return readPair(used, limit, mode, toIso(resetKey), unlimited)
 }
 
@@ -356,7 +386,7 @@ function readQuotaList(source: unknown, mode: AmountMode): { daily?: PackageQuot
   for (const item of list) {
     if (!item || typeof item !== 'object') continue
     const row = item as Record<string, unknown>
-    const period = text(row.period ?? row.reset_period ?? row.quota_reset_period ?? row.type ?? row.cycle).toLowerCase()
+    const period = classifyPeriod(row.period ?? row.reset_period ?? row.quota_reset_period ?? row.type ?? row.cycle ?? row.name ?? row.title)
     const pair = readPair(
       row.used ?? row.used_quota ?? row.amount_used,
       row.limit ?? row.quota ?? row.amount_total ?? row.total,
@@ -364,9 +394,9 @@ function readQuotaList(source: unknown, mode: AmountMode): { daily?: PackageQuot
       toIso(row.resetsAt ?? row.resets_at ?? row.reset_at ?? row.next_reset_time ?? row.nextResetTime),
       isUnlimitedFlag(row.unlimited ?? row.is_unlimited),
     )
-    if (!pair) continue
-    if (['daily', 'day', 'today'].includes(period)) found.daily = found.daily ?? pair
-    if (['weekly', 'week'].includes(period)) found.weekly = found.weekly ?? pair
+    if (!pair || period === 'combo' || period === 'other') continue
+    if (period === 'daily') found.daily = found.daily ?? pair
+    if (period === 'weekly') found.weekly = found.weekly ?? pair
   }
   return found
 }
@@ -463,14 +493,37 @@ function mapPackage(item: unknown, plans: Map<string, PlanMeta>, mode: AmountMod
   const resolvedName = name || (id ? `套餐 #${id}` : '')
   if (!resolvedName) return null
 
-  const period = text(
+  const periodKind = classifyPeriod(
     embedded?.quota_reset_period ?? embedded?.reset_period ?? sub.quota_reset_period ?? sub.reset_period ?? catalog?.period,
-  ).toLowerCase()
+  )
+  const limitKind = classifyPeriod(
+    sub.limit_type ?? sub.limitType ?? sub.quota_type ?? sub.quotaType
+    ?? embedded?.limit_type ?? embedded?.limitType ?? embedded?.quota_type
+    ?? box.limit_type ?? box.limitType ?? box.quota_type ?? box.quotaType,
+  )
   const listed = readQuotaList(sub, mode)
-  let daily = readWindow(sub, 'daily', mode) ?? readWindow(embedded, 'daily', mode) ?? listed.daily
-  let weekly = readWindow(sub, 'weekly', mode) ?? readWindow(embedded, 'weekly', mode) ?? listed.weekly
-  if (!daily && (period === 'daily' || period === 'day')) daily = fromPeriodAmounts(sub, mode)
-  if (!weekly && (period === 'weekly' || period === 'week')) weekly = fromPeriodAmounts(sub, mode)
+  const listedEmbedded = embedded ? readQuotaList(embedded, mode) : {}
+  const listedBox = box !== sub ? readQuotaList(box, mode) : {}
+  let daily = readWindow(sub, 'daily', mode)
+    ?? readWindow(embedded, 'daily', mode)
+    ?? (box !== sub ? readWindow(box, 'daily', mode) : undefined)
+    ?? listed.daily
+    ?? listedEmbedded.daily
+    ?? listedBox.daily
+  let weekly = readWindow(sub, 'weekly', mode)
+    ?? readWindow(embedded, 'weekly', mode)
+    ?? (box !== sub ? readWindow(box, 'weekly', mode) : undefined)
+    ?? listed.weekly
+    ?? listedEmbedded.weekly
+    ?? listedBox.weekly
+  // 「周日限额」是周+日同时存在。单一 amount_used/amount_total 不能拆成两根进度条，也不当成周限额。
+  const combo = periodKind === 'combo' || limitKind === 'combo'
+  if (!combo && !daily && (periodKind === 'daily' || limitKind === 'daily')) {
+    daily = fromPeriodAmounts(sub, mode) ?? (box !== sub ? fromPeriodAmounts(box, mode) : undefined)
+  }
+  if (!combo && !weekly && (periodKind === 'weekly' || limitKind === 'weekly')) {
+    weekly = fromPeriodAmounts(sub, mode) ?? (box !== sub ? fromPeriodAmounts(box, mode) : undefined)
+  }
 
   const daysLeft = readDaysLeft(sub, now)
   const expiresAt = toIso(sub.expiresAt ?? sub.expires_at ?? sub.end_time ?? sub.endTime ?? sub.expire_time)
