@@ -148,8 +148,12 @@
       "dailyOnly": "일일 한도만",
       "weeklyOnly": "주간 한도",
       "dailyInCombo": "일일 한도",
-      "weeklyInCombo": "주간 총한도"
+      "weeklyInCombo": "매주 한도",
+      "combo": "주간+일일 한도"
     },
+    "drag": "패키지 드래그",
+    "collapse": "패키지 접기",
+    "expand": "패키지 펼치기",
     "unlimited": "한도 없음",
     "usedUnlimited": "{{used}} · 한도 없음",
     "daysLeft": "{{count}}일 남음",
@@ -651,7 +655,7 @@
         "detail_path_hint": "비우면 NewAPI는 /api/subscription/self 를 쓰고, /api/subscription/plans 로 이름과 초기화 주기를 보완합니다",
         "enabled": "홈에 표시",
         "disabled": "홈에서 숨김",
-        "shape_hint": "잔액은 /api/user/self 의 quota÷500000 입니다. 각 플랜은 실제로 온 항목만 표시합니다. 주간만, 일일만, 또는 둘 다(일일 한도 + 주간 총한도). limit 이 0 이거나 unlimited 이면 한도 없음입니다. 없는 숫자는 만들지 않습니다.",
+        "shape_hint": "잔액은 /api/user/self 의 quota÷500000 입니다. 각 플랜은 실제로 온 항목만 표시합니다. 주간만, 일일만, 또는 둘 다(주간+일일, limit_type 이 周日限额 인 경우 포함). 둘 다 있으면 주간 한도로만 표시하지 않습니다. 없는 숫자는 만들지 않습니다. limit 이 0 이거나 unlimited 이면 한도 없음입니다.",
         "test": "연결 테스트",
         "testing": "테스트 중...",
         "test_ok": "연결됨. 잔액 {{balance}}, 플랜 {{count}}개",
