@@ -14,16 +14,17 @@ import {
   Monitor,
   Sparkles,
   Users,
-  Shield
+  Shield,
+  Wallet
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { WidgetVisibility } from '../../lib/api'
 
 // 仅包含布尔开关的组件 ID 类型
-type WidgetToggleId = 'systemMonitor' | 'hardwareIdentity' | 'vitalSigns' | 'networkTelemetry' | 'processMatrix' | 'dockMiniMonitor' | 'mobileTicker' | 'aiAssistant'
+type WidgetToggleId = 'systemMonitor' | 'hardwareIdentity' | 'vitalSigns' | 'networkTelemetry' | 'processMatrix' | 'dockMiniMonitor' | 'mobileTicker' | 'aiAssistant' | 'packageUsage'
 
 // 访问模式 key 类型
-type WidgetAccessId = 'systemMonitorAccess' | 'hardwareIdentityAccess' | 'vitalSignsAccess' | 'networkTelemetryAccess' | 'processMatrixAccess' | 'dockMiniMonitorAccess' | 'mobileTickerAccess' | 'aiAssistantAccess'
+type WidgetAccessId = 'systemMonitorAccess' | 'hardwareIdentityAccess' | 'vitalSignsAccess' | 'networkTelemetryAccess' | 'processMatrixAccess' | 'dockMiniMonitorAccess' | 'mobileTickerAccess' | 'aiAssistantAccess' | 'packageUsageAccess'
 
 interface WidgetConfig {
   id: WidgetToggleId
@@ -107,6 +108,15 @@ const widgetConfigs: WidgetConfig[] = [
     icon: Sparkles,
     gradient: 'from-violet-500 to-indigo-600',
     category: 'dock',
+  },
+  {
+    id: 'packageUsage',
+    accessId: 'packageUsageAccess',
+    labelKey: 'admin.settings.widget.package_usage',
+    descKey: 'admin.settings.widget.package_usage_desc',
+    icon: Wallet,
+    gradient: 'from-amber-500 to-orange-600',
+    category: 'dashboard',
   },
 ]
 

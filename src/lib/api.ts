@@ -108,7 +108,7 @@ async function request<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { requireAuth = false, timeout = 30000, ...fetchOptions } = options
+  const { requireAuth = false, timeout = 30000, signal: externalSignal, ...fetchOptions } = options
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -123,9 +123,18 @@ async function request<T>(
     }
   }
 
-  // 创建 AbortController 用于超时控制
+  // 超时与调用方取消共用一个信号，避免自动刷新时叠加上一次请求。
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeout)
+  let timedOut = false
+  const timeoutId = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, timeout)
+  const onExternalAbort = () => controller.abort()
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort()
+    else externalSignal.addEventListener('abort', onExternalAbort)
+  }
 
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -133,8 +142,6 @@ async function request<T>(
       headers,
       signal: controller.signal,
     })
-
-    clearTimeout(timeoutId)
     
     // 处理无内容响应
     if (res.status === 204) {
@@ -173,10 +180,9 @@ async function request<T>(
     
     return data as T
   } catch (error) {
-    clearTimeout(timeoutId)
-    
-    // 处理 AbortError（超时）
+    // 调用方主动取消（例如刷新间隔重入）不应当成超时。
     if (error instanceof DOMException && error.name === 'AbortError') {
+      if (!timedOut && externalSignal?.aborted) throw error
       throw new ApiError('请求超时，请稍后重试', 408)
     }
     
@@ -192,6 +198,9 @@ async function request<T>(
     
     // 其他错误
     throw new NetworkError('请求失败，请稍后重试')
+  } finally {
+    clearTimeout(timeoutId)
+    externalSignal?.removeEventListener('abort', onExternalAbort)
   }
 }
 
@@ -719,6 +728,7 @@ export interface WidgetVisibility {
   dockMiniMonitor?: boolean    // Dock 迷你监控
   mobileTicker?: boolean       // 移动端状态栏
   aiAssistant?: boolean        // AI 助手
+  packageUsage?: boolean       // 首页套餐额度
   // 每个组件的访问模式：public=所有人可见，private=仅登录用户可见
   systemMonitorAccess?: 'public' | 'private'
   hardwareIdentityAccess?: 'public' | 'private'
@@ -728,6 +738,52 @@ export interface WidgetVisibility {
   dockMiniMonitorAccess?: 'public' | 'private'
   mobileTickerAccess?: 'public' | 'private'
   aiAssistantAccess?: 'public' | 'private'
+  packageUsageAccess?: 'public' | 'private'
+}
+
+export type PackageQuotaMode = 'none' | 'daily' | 'weekly' | 'daily_and_weekly'
+
+export interface PackageQuotaWindow {
+  used?: number
+  limit?: number
+  unlimited?: boolean
+  resetsAt?: string
+}
+
+export interface PackagePlan {
+  id?: string
+  name: string
+  status?: string
+  daysLeft?: number
+  expiresAt?: string
+  quotaMode?: PackageQuotaMode
+  daily?: PackageQuotaWindow
+  weekly?: PackageQuotaWindow
+}
+
+export interface PackageUsageResponse {
+  ok: boolean
+  enabled: boolean
+  balance: number | null
+  currency: string
+  packages: PackagePlan[]
+  updatedAt: string | null
+  refreshIntervalMin: number
+  error?: string
+}
+
+export interface PackageUsageConfig {
+  preset: 'newapi' | 'custom'
+  baseUrl: string
+  userId: string
+  timeoutSec: number
+  refreshIntervalMin: number
+  currency: string
+  packageDetailPath: string
+  amountMode: 'quota' | 'money'
+  hasToken: boolean
+  tokenPreview: string
+  accessToken?: string
 }
 
 // 菜单项可见性配置
@@ -830,6 +886,8 @@ function parseSettings(raw: Record<string, string>): SiteSettings {
     dockMiniMonitorAccess: 'public',
     mobileTickerAccess: 'public',
     aiAssistantAccess: 'public',
+    packageUsage: false,
+    packageUsageAccess: 'private',
   }
   
   if (raw.widgetVisibility) {
@@ -979,6 +1037,34 @@ export async function updateSettings(settings: SiteSettings): Promise<SiteSettin
     requireAuth: true,
   })
   return parseSettings(raw)
+}
+
+export async function fetchPackageUsage(signal?: AbortSignal): Promise<PackageUsageResponse> {
+  const token = getToken()
+  return request<PackageUsageResponse>('/api/package-usage', {
+    requireAuth: !!token,
+    signal,
+  })
+}
+
+export async function fetchPackageUsageConfig(): Promise<PackageUsageConfig> {
+  return request<PackageUsageConfig>('/api/package-usage/config', { requireAuth: true })
+}
+
+export async function savePackageUsageConfig(config: Partial<PackageUsageConfig>): Promise<PackageUsageConfig> {
+  return request<PackageUsageConfig>('/api/package-usage/config', {
+    method: 'PUT',
+    body: JSON.stringify(config),
+    requireAuth: true,
+  })
+}
+
+export async function testPackageUsage(config: Partial<PackageUsageConfig>): Promise<PackageUsageResponse> {
+  return request<PackageUsageResponse>('/api/package-usage/test', {
+    method: 'POST',
+    body: JSON.stringify(config),
+    requireAuth: true,
+  })
 }
 
 // ========== API 导出对象 (便于统一使用) ==========

@@ -477,6 +477,8 @@ function AdminContent() {
       processMatrix: true,
       dockMiniMonitor: true,
       mobileTicker: true,
+      packageUsage: false,
+      packageUsageAccess: 'private',
     },
   })
   const [isSavingSettings, setIsSavingSettings] = useState(false)
@@ -492,6 +494,8 @@ function AdminContent() {
     processMatrix: false,
     dockMiniMonitor: false,
     mobileTicker: false,
+    packageUsage: false,
+    packageUsageAccess: 'private',
   })
   const [isSavingWidgetSettings, setIsSavingWidgetSettings] = useState(false)
   const [widgetSettingsSuccess, setWidgetSettingsSuccess] = useState(false)
@@ -1080,7 +1084,8 @@ function AdminContent() {
   }
 
   // 保存仪表设置
-  const handleSaveWidgetSettings = async () => {
+  const handleSaveWidgetSettings = async (next?: WidgetVisibility) => {
+    const visibilityToSave = next ?? widgetVisibility
     setWidgetSettingsError('')
     setWidgetSettingsSuccess(false)
     setIsSavingWidgetSettings(true)
@@ -1088,7 +1093,7 @@ function AdminContent() {
     try {
       const updatedSettings = {
         ...siteSettings,
-        widgetVisibility,
+        widgetVisibility: visibilityToSave,
       }
       const updated = await updateSettings(updatedSettings)
       setSiteSettings(updated)
