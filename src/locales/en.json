@@ -156,6 +156,16 @@
     "drag": "Drag package",
     "collapse": "Collapse package",
     "expand": "Expand package",
+    "resize": {
+      "n": "Resize package from the top edge",
+      "s": "Resize package from the bottom edge",
+      "e": "Resize package from the right edge",
+      "w": "Resize package from the left edge",
+      "ne": "Resize package from the top-right corner",
+      "nw": "Resize package from the top-left corner",
+      "se": "Resize package from the bottom-right corner",
+      "sw": "Resize package from the bottom-left corner"
+    },
     "unlimited": "Unlimited",
     "usedUnlimited": "{{used}} · Unlimited",
     "daysLeft": "{{count}} days left",
