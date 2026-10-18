@@ -741,6 +741,8 @@ export interface WidgetVisibility {
   packageUsageAccess?: 'public' | 'private'
 }
 
+export type PackageSizeTier = 'mini' | 'medium' | 'large'
+
 export type PackageQuotaMode = 'none' | 'daily' | 'weekly' | 'daily_and_weekly'
 
 export interface PackageQuotaWindow {
@@ -769,6 +771,8 @@ export interface PackageUsageResponse {
   packages: PackagePlan[]
   updatedAt: string | null
   refreshIntervalMin: number
+  /** 管理员设置的默认尺寸。个人右键选择存在 localStorage，优先于这项。 */
+  defaultTier?: PackageSizeTier
   error?: string
 }
 
@@ -781,6 +785,8 @@ export interface PackageUsageConfig {
   currency: string
   packageDetailPath: string
   amountMode: 'quota' | 'money'
+  /** 首页套餐卡的默认密度。令牌仍只留在服务器。 */
+  defaultTier: PackageSizeTier
   hasToken: boolean
   tokenPreview: string
   accessToken?: string

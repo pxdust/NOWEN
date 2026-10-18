@@ -151,18 +151,19 @@
       "weeklyInCombo": "매주 한도",
       "combo": "주간+일일 한도"
     },
+    "balanceShort": "잔액",
     "drag": "패키지 드래그",
     "collapse": "패키지 접기",
     "expand": "패키지 펼치기",
-    "resize": {
-      "n": "위쪽 가장자리에서 패키지 크기 조절",
-      "s": "아래쪽 가장자리에서 패키지 크기 조절",
-      "e": "오른쪽 가장자리에서 패키지 크기 조절",
-      "w": "왼쪽 가장자리에서 패키지 크기 조절",
-      "ne": "오른쪽 위 모서리에서 패키지 크기 조절",
-      "nw": "왼쪽 위 모서리에서 패키지 크기 조절",
-      "se": "오른쪽 아래 모서리에서 패키지 크기 조절",
-      "sw": "왼쪽 아래 모서리에서 패키지 크기 조절"
+    "tier": {
+      "menu": "패키지 크기",
+      "mini": "미니",
+      "medium": "보통",
+      "large": "크게"
+    },
+    "ring": {
+      "daily": "일일 한도",
+      "weekly": "주간 한도"
     },
     "unlimited": "한도 없음",
     "usedUnlimited": "{{used}} · 한도 없음",
@@ -663,6 +664,11 @@
         "amount_money": "금액",
         "detail_path": "패키지 상세 경로",
         "detail_path_hint": "비우면 NewAPI는 /api/subscription/self 를 쓰고, /api/subscription/plans 로 이름과 초기화 주기를 보완합니다",
+        "default_tier": "홈 기본 크기",
+        "default_tier_hint": "브라우저에서 오른쪽 클릭으로 고르기 전까지 사용합니다. 그 선택은 기기에만 저장되고 이 기본값은 바뀌지 않습니다.",
+        "tier_mini": "미니",
+        "tier_medium": "보통",
+        "tier_large": "크게",
         "enabled": "홈에 표시",
         "disabled": "홈에서 숨김",
         "shape_hint": "잔액은 /api/user/self 의 quota÷500000 입니다. 각 플랜은 실제로 온 항목만 표시합니다. 주간만, 일일만, 또는 둘 다(주간+일일, limit_type 이 周日限额 인 경우 포함). 둘 다 있으면 주간 한도로만 표시하지 않습니다. 없는 숫자는 만들지 않습니다. limit 이 0 이거나 unlimited 이면 한도 없음입니다.",

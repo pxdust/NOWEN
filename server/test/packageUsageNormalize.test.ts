@@ -234,15 +234,32 @@ async function main() {
     currency: 'USD',
     packageDetailPath: '',
     amountMode: 'quota',
+    defaultTier: 'large',
   }
   const pub = toPublicConfig(stored)
   assert.equal(pub.hasToken, true)
   assert.equal(pub.tokenPreview, '••••••1234')
+  assert.equal(pub.defaultTier, 'large')
   assert.equal(JSON.stringify(pub).includes('sk-live'), false)
 
   const kept = mergePackageConfig(stored, { ...pub, baseUrl: 'https://example.com', accessToken: pub.tokenPreview })
   assert.equal(kept.accessToken, stored.accessToken)
   assert.equal(kept.baseUrl, 'https://example.com')
+  assert.equal(kept.defaultTier, 'large')
+
+  const miniDefault = mergePackageConfig(stored, { defaultTier: 'mini' })
+  assert.equal(miniDefault.defaultTier, 'mini')
+  assert.equal(miniDefault.accessToken, stored.accessToken)
+  const invalidTier = mergePackageConfig(miniDefault, { defaultTier: 'huge' })
+  assert.equal(invalidTier.defaultTier, 'mini')
+  const omittedTier = mergePackageConfig(miniDefault, { currency: 'CNY' })
+  assert.equal(omittedTier.defaultTier, 'mini')
+  assert.equal(omittedTier.currency, 'CNY')
+  const freshTier = mergePackageConfig(null, {})
+  assert.equal(freshTier.defaultTier, 'large')
+  const publicMini = toPublicConfig(miniDefault)
+  assert.equal(publicMini.defaultTier, 'mini')
+  assert.equal(JSON.stringify(publicMini).includes('sk-live'), false)
 
   const replaced = mergePackageConfig(stored, { accessToken: 'new-token-9999' })
   assert.equal(replaced.accessToken, 'new-token-9999')

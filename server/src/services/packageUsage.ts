@@ -105,6 +105,7 @@ function emptyDto(cfg: PackageUsageConfig | null, error: string): PackageUsageDt
     packages: [],
     updatedAt: null,
     refreshIntervalMin: cfg?.refreshIntervalMin ?? 0,
+    defaultTier: cfg?.defaultTier === 'mini' || cfg?.defaultTier === 'medium' || cfg?.defaultTier === 'large' ? cfg.defaultTier : 'large',
     error,
   }
 }
@@ -196,6 +197,7 @@ async function queryUncached(cfg: PackageUsageConfig): Promise<PackageUsageDto> 
     packages: normalized.packages,
     updatedAt: new Date().toISOString(),
     refreshIntervalMin: cfg.refreshIntervalMin,
+    defaultTier: cfg.defaultTier,
   }
 }
 

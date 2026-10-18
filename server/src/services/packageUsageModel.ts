@@ -36,6 +36,7 @@ export const QUOTA_PER_UNIT = 500_000
 
 export type PackagePreset = 'newapi' | 'custom'
 export type AmountMode = 'quota' | 'money'
+export type PackageSizeTier = 'mini' | 'medium' | 'large'
 
 export interface PackageUsageConfig {
   preset: PackagePreset
@@ -48,6 +49,8 @@ export interface PackageUsageConfig {
   /** 以 / 开头的路径。空字符串表示使用预设默认路径。 */
   packageDetailPath: string
   amountMode: AmountMode
+  /** 首页玻璃卡的默认密度。不是密钥。 */
+  defaultTier: PackageSizeTier
 }
 
 export interface PublicPackageUsageConfig {
@@ -59,6 +62,7 @@ export interface PublicPackageUsageConfig {
   currency: string
   packageDetailPath: string
   amountMode: AmountMode
+  defaultTier: PackageSizeTier
   hasToken: boolean
   tokenPreview: string
 }
@@ -94,6 +98,7 @@ export interface PackageUsageDto {
   packages: PackagePlan[]
   updatedAt: string | null
   refreshIntervalMin: number
+  defaultTier: PackageSizeTier
   error?: string
 }
 
@@ -107,10 +112,15 @@ const DEFAULTS: PackageUsageConfig = {
   currency: 'USD',
   packageDetailPath: '',
   amountMode: 'quota',
+  defaultTier: 'large',
 }
 
 export function defaultPackageUsageConfig(): PackageUsageConfig {
   return { ...DEFAULTS }
+}
+
+export function normalizePackageTier(value: unknown, fallback: PackageSizeTier = 'large'): PackageSizeTier {
+  return value === 'mini' || value === 'medium' || value === 'large' ? value : fallback
 }
 
 export function isMaskedToken(value: string): boolean {
@@ -135,6 +145,7 @@ export function toPublicConfig(cfg: PackageUsageConfig | null | undefined): Publ
     currency: src.currency || DEFAULTS.currency,
     packageDetailPath: src.packageDetailPath || '',
     amountMode: src.amountMode === 'money' ? 'money' : 'quota',
+    defaultTier: normalizePackageTier(src.defaultTier),
     hasToken: !!src.accessToken,
     tokenPreview: tokenPreview(src.accessToken),
   }
@@ -215,6 +226,7 @@ export function mergePackageConfig(
     currency: currencyRaw.slice(0, 8) || DEFAULTS.currency,
     packageDetailPath: typeof raw.packageDetailPath === 'string' ? raw.packageDetailPath.trim() : prev.packageDetailPath,
     amountMode: raw.amountMode === 'money' ? 'money' : raw.amountMode === 'quota' ? 'quota' : prev.amountMode,
+    defaultTier: normalizePackageTier(raw.defaultTier, normalizePackageTier(prev.defaultTier)),
   }
 }
 

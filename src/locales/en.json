@@ -153,18 +153,19 @@
       "weeklyInCombo": "Weekly quota",
       "combo": "Weekly and daily limit"
     },
+    "balanceShort": "Balance",
     "drag": "Drag package",
     "collapse": "Collapse package",
     "expand": "Expand package",
-    "resize": {
-      "n": "Resize package from the top edge",
-      "s": "Resize package from the bottom edge",
-      "e": "Resize package from the right edge",
-      "w": "Resize package from the left edge",
-      "ne": "Resize package from the top-right corner",
-      "nw": "Resize package from the top-left corner",
-      "se": "Resize package from the bottom-right corner",
-      "sw": "Resize package from the bottom-left corner"
+    "tier": {
+      "menu": "Package size",
+      "mini": "Mini",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "ring": {
+      "daily": "Daily limit",
+      "weekly": "Weekly limit"
     },
     "unlimited": "Unlimited",
     "usedUnlimited": "{{used}} · Unlimited",
@@ -665,6 +666,11 @@
         "amount_money": "Money",
         "detail_path": "Package detail path",
         "detail_path_hint": "Empty uses /api/subscription/self for NewAPI, plus /api/subscription/plans for plan names and reset periods",
+        "default_tier": "Default home size",
+        "default_tier_hint": "Used until someone picks a size from the right-click menu. That choice stays on their device and does not change this default.",
+        "tier_mini": "Mini",
+        "tier_medium": "Medium",
+        "tier_large": "Large",
         "enabled": "Show on home",
         "disabled": "Hide on home",
         "shape_hint": "Balance comes from /api/user/self quota÷500000. Plan amounts use the same quota÷500000 scale. amount_used/amount_total is the reset-period window and weekly_amount_used/weekly_amount_total is the weekly window; when both totals are above 0 the card shows both (weekly-and-daily), even if plan_quota_reset_period is daily. Weekly only and daily only stay single bars. A limit_type of 周日限额 without separate day and week numbers does not relabel the single amount as weekly, and missing numbers are not invented. A limit of 0 or unlimited is shown as Unlimited.",
