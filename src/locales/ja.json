@@ -147,9 +147,13 @@
     "mode": {
       "dailyOnly": "日次上限のみ",
       "weeklyOnly": "週間上限",
-      "dailyInCombo": "日次上限",
-      "weeklyInCombo": "週間総上限"
+      "dailyInCombo": "1日の上限",
+      "weeklyInCombo": "1週間の上限",
+      "combo": "週次と日次の上限"
     },
+    "drag": "プランをドラッグ",
+    "collapse": "プランを折りたたむ",
+    "expand": "プランを展開",
     "unlimited": "上限なし",
     "usedUnlimited": "{{used}} · 上限なし",
     "daysLeft": "残り {{count}} 日",
@@ -651,7 +655,7 @@
         "detail_path_hint": "空欄のとき NewAPI は /api/subscription/self を使い、/api/subscription/plans で名前とリセット周期を補います",
         "enabled": "ホームに表示",
         "disabled": "ホームで非表示",
-        "shape_hint": "残高は /api/user/self の quota÷500000 です。各プランは返ってきた項目だけを表示します。週のみ、日のみ、または両方（日次上限 + 週間総上限）。limit が 0 または unlimited は上限なしです。無い数字は作りません。",
+        "shape_hint": "残高は /api/user/self の quota÷500000 です。各プランは返ってきた項目だけを表示します。週のみ、日のみ、または両方（週次と日次。limit_type が「周日限额」のときも含む）。両方ある場合は週のみとは表示しません。無い数字は作りません。limit が 0 または unlimited は上限なしです。",
         "test": "接続テスト",
         "testing": "テスト中...",
         "test_ok": "接続しました。残高 {{balance}}、プラン {{count}} 件",
