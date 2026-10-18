@@ -129,7 +129,7 @@ export function BookmarkCard({
             scale: [1, 1.02, 1, 1],
           }}
           transition={{ duration: 2.5, times: [0, 0.3, 0.6, 1] }}
-          className="absolute inset-0 rounded-2xl ring-2 ring-[var(--gradient-1)] ring-offset-2 ring-offset-transparent pointer-events-none"
+          className="absolute inset-0 rounded-none ring-2 ring-[var(--gradient-1)] ring-offset-2 ring-offset-transparent pointer-events-none"
           style={{
             boxShadow: '0 0 20px var(--gradient-1), inset 0 0 20px rgba(255,255,255,0.1)',
           }}
@@ -445,7 +445,7 @@ export function BookmarkCard({
 // 骨架屏组件
 export function BookmarkCardSkeleton() {
   return (
-    <div className="rounded-2xl glass p-5">
+    <div className="rounded-none glass p-5">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 rounded-xl skeleton flex-shrink-0" />
         <div className="flex-1 space-y-3">

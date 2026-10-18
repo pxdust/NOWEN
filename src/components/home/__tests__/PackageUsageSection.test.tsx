@@ -29,6 +29,14 @@ function setViewport(width: number, height: number) {
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: height })
 }
 
+function expectSquarePackageShell() {
+  const shell = document.querySelector('[data-section="package-usage"] .overflow-hidden.backdrop-blur-xl') as HTMLElement
+  expect(shell).toBeTruthy()
+  expect(shell.className).toContain('rounded-none')
+  expect(shell.className).not.toContain('rounded-2xl')
+  expect(shell.className).not.toContain('rounded-[28px]')
+}
+
 const sampleUsage = {
   ok: true as const,
   enabled: true,
@@ -90,9 +98,9 @@ describe('PackageUsageSection quota modes', () => {
 
     render(<PackageUsageSection />)
 
-    const week = (await screen.findByText('周卡')).closest('.rounded-xl') as HTMLElement
-    const day = screen.getByText('日卡').closest('.rounded-xl') as HTMLElement
-    const both = screen.getByText('双周期').closest('.rounded-xl') as HTMLElement
+    const week = (await screen.findByText('周卡')).closest('[data-density]') as HTMLElement
+    const day = screen.getByText('日卡').closest('[data-density]') as HTMLElement
+    const both = screen.getByText('双周期').closest('[data-density]') as HTMLElement
 
     expect(within(week).getByText('周限额')).toBeInTheDocument()
     expect(within(week).queryByText('仅日限额')).toBeNull()
@@ -134,7 +142,7 @@ describe('PackageUsageSection quota modes', () => {
     })
 
     render(<PackageUsageSection />)
-    const card = (await screen.findByText('【双休套餐】Codex 月卡 1000$')).closest('.rounded-xl') as HTMLElement
+    const card = (await screen.findByText('【双休套餐】Codex 月卡 1000$')).closest('[data-density]') as HTMLElement
     expect(within(card).getByText('周日限额')).toBeInTheDocument()
     expect(within(card).getByText('每日额度')).toBeInTheDocument()
     expect(within(card).getByText('每周额度')).toBeInTheDocument()
@@ -222,6 +230,7 @@ describe('套餐尺寸档', () => {
 
     const section = document.querySelector('[data-section="package-usage"]') as HTMLElement
     expect(section.getAttribute('data-tier')).toBe('large')
+    expectSquarePackageShell()
     expect(section.style.width).toBe('')
     expect(section.style.height).toBe('')
     expect(document.querySelector('[data-resize]')).toBeNull()
@@ -245,6 +254,7 @@ describe('套餐尺寸档', () => {
 
     const section = document.querySelector('[data-section="package-usage"]') as HTMLElement
     expect(section.getAttribute('data-tier')).toBe('mini')
+    expectSquarePackageShell()
     fireEvent.contextMenu(section, { clientX: 40, clientY: 48 })
     const menu = screen.getByRole('menu', { name: '套餐尺寸' })
     expect(within(menu).getByRole('menuitemradio', { name: '迷你' })).toHaveAttribute('aria-checked', 'true')
@@ -301,7 +311,9 @@ describe('套餐尺寸档', () => {
       }],
     })
     const mediumView = render(<PackageUsageSection />)
+    expectSquarePackageShell()
     const medium = (await screen.findByText('双休套餐')).closest('[data-density="medium"]') as HTMLElement
+    expect(medium.className).toContain('rounded-none')
     expect(medium).toHaveAttribute('data-primary-quota', 'weekly')
     expect(within(medium).getByText('每周额度')).toBeInTheDocument()
     expect(within(medium).queryByText('每日额度')).toBeNull()
@@ -313,6 +325,8 @@ describe('套餐尺寸档', () => {
     window.localStorage.setItem('nowen-package-widget-tier', 'large')
     render(<PackageUsageSection />)
     const large = (await screen.findByText('双休套餐')).closest('[data-density="large"]') as HTMLElement
+    expect(large.className).toContain('rounded-none')
+    expectSquarePackageShell()
     expect(within(large).getByText('每日额度')).toBeInTheDocument()
     expect(within(large).getByText('每周额度')).toBeInTheDocument()
     expect(within(large).getByText(/到期/)).toBeInTheDocument()
@@ -370,6 +384,7 @@ describe('套餐尺寸档', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '收起套餐' }))
     const collapsed = document.querySelector('[data-section="package-usage"]') as HTMLElement
+    expectSquarePackageShell()
     expect(collapsed.style.height).toBe('')
     expect(screen.queryByText('每日额度')).toBeNull()
     expect(screen.getByText(/双休套餐/)).toBeInTheDocument()
@@ -378,6 +393,7 @@ describe('套餐尺寸档', () => {
     fireEvent.click(screen.getByRole('menuitemradio', { name: '迷你' }))
     const miniCollapsed = document.querySelector('[data-section="package-usage"]') as HTMLElement
     expect(miniCollapsed.getAttribute('data-tier')).toBe('mini')
+    expectSquarePackageShell()
     expect(miniCollapsed.style.height).toBe('')
     expect(miniCollapsed.style.width).toBe('')
     expect(document.querySelector('[data-ring-mode]')).toBeNull()
@@ -386,6 +402,7 @@ describe('套餐尺寸档', () => {
     expect(await screen.findByRole('img', { name: /周限额/ })).toHaveAttribute('data-ring-mode', 'nested')
     const expanded = document.querySelector('[data-section="package-usage"]') as HTMLElement
     expect(expanded.style.height).toBe('')
+    expectSquarePackageShell()
     expect(expanded.className).toContain('w-[16.25rem]')
   })
 })

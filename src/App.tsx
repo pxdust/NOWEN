@@ -675,7 +675,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           transition={{ duration: 0.6 }}
         >
           <div
-            className="relative p-8 rounded-3xl backdrop-blur-xl overflow-hidden"
+            className="relative p-8 rounded-none backdrop-blur-xl overflow-hidden"
             style={{
               background: 'var(--color-glass, rgba(255,255,255,0.03))',
               border: '1px solid var(--color-glass-border, rgba(255,255,255,0.08))',
@@ -871,7 +871,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
 
           {activeTag && (
             <motion.div
-              className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl px-4 py-3 backdrop-blur-xl"
+              className="mb-6 flex flex-wrap items-center gap-2 rounded-none px-4 py-3 backdrop-blur-xl"
               style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1020,7 +1020,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           {/* Empty State */}
           {activeTag && visibleBookmarks.length === 0 && !isLoading && (
             <motion.div
-              className="mb-8 flex flex-col items-center justify-center rounded-3xl px-6 py-14 text-center"
+              className="mb-8 flex flex-col items-center justify-center rounded-none px-6 py-14 text-center"
               style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1431,7 +1431,7 @@ function CategorySkeleton({ count, color, cardViewMode = 'standard' }: { count: 
       {Array.from({ length: displayCount }).map((_, i) => (
         <div
           key={i}
-          className={`rounded-2xl ${isCompact ? 'p-3' : 'p-5'} animate-pulse`}
+          className={`rounded-none ${isCompact ? 'p-3' : 'p-5'} animate-pulse`}
           style={{
             background: 'var(--color-glass)',
             border: '1px solid var(--color-glass-border)',

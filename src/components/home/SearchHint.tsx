@@ -18,8 +18,8 @@ export function SearchHint({ onOpenSearch, variant = 'default' }: SearchHintProp
       aria-label={t('search_placeholder')}
       className={
         edge
-          ? 'flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs sm:gap-2 sm:px-2.5 sm:text-sm'
-          : 'flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm sm:w-64'
+          ? 'flex items-center gap-1.5 rounded-none px-2 py-1.5 text-xs sm:gap-2 sm:px-2.5 sm:text-sm'
+          : 'flex w-full items-center gap-2 rounded-none px-3 py-1.5 text-left text-sm sm:w-64'
       }
       style={{
         background: 'var(--color-glass)',

@@ -239,7 +239,7 @@ export function MobileContentNavigation({
               role="dialog"
               aria-modal="true"
               aria-label={copy.navigation}
-              className="absolute bottom-0 left-0 top-0 flex flex-col overflow-hidden rounded-r-3xl"
+              className="absolute bottom-0 left-0 top-0 flex flex-col overflow-hidden rounded-none"
               style={{
                 width: 'min(82vw, 320px)',
                 paddingTop: 'max(16px, env(safe-area-inset-top))',

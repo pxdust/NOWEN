@@ -81,7 +81,7 @@ function LoadingPlaceholder({ viewMode }: { viewMode: MonitorViewMode }) {
   }
 
   return (
-    <div className="min-h-[200px] flex items-center justify-center rounded-2xl bg-slate-950/50 border border-white/5">
+    <div className="min-h-[200px] flex items-center justify-center rounded-none bg-slate-950/50 border border-white/5">
       <div className="flex flex-col items-center gap-2">
         <Loader2 className="w-8 h-8 text-cyan-400/50 animate-spin" />
         <span className="text-xs text-white/30 font-mono">正在连接系统...</span>
@@ -123,7 +123,7 @@ function ErrorPlaceholder({ viewMode, onRetry }: { viewMode: MonitorViewMode; on
   }
 
   return (
-    <div className="min-h-[200px] flex items-center justify-center rounded-2xl bg-red-950/20 border border-red-500/20">
+    <div className="min-h-[200px] flex items-center justify-center rounded-none bg-red-950/20 border border-red-500/20">
       <div className="flex flex-col items-center gap-2">
         <div className="text-red-400 text-2xl">⚠</div>
         <span className="text-sm text-red-400/80">系统连接失败</span>

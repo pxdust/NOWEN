@@ -331,7 +331,7 @@ export function SpotlightSearch({
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           >
             <div 
-              className="relative flex max-h-[min(85vh,720px)] flex-col overflow-hidden rounded-2xl backdrop-blur-2xl shadow-2xl"
+              className="relative flex max-h-[min(85vh,720px)] flex-col overflow-hidden rounded-none backdrop-blur-2xl shadow-2xl"
               style={{
                 background: 'var(--color-glass)',
                 border: '1px solid var(--color-glass-border)',

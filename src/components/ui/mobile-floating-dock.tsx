@@ -150,7 +150,7 @@ export function MobileFloatingDock({
                   setActiveSubmenu(null);
                 }}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-xl",
+                  "flex items-center gap-2 px-3 py-2 rounded-none",
                   "bg-white/95 border-slate-200/80",
                   "dark:bg-black/80 dark:border-white/10",
                   "backdrop-blur-xl border",
@@ -189,7 +189,7 @@ export function MobileFloatingDock({
                 }}
                 onClick={() => handleItemClick(item)}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-2xl",
+                  "flex items-center gap-3 px-4 py-3 rounded-none",
                   "bg-white/95 border-slate-200/80",
                   "dark:bg-black/80 dark:border-white/10",
                   "backdrop-blur-xl border",

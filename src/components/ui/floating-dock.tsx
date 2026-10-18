@@ -306,7 +306,7 @@ export function FloatingDock({
             animate={isMobile ? { opacity: 1 } : { scale: 1, opacity: 1 }}
             exit={isMobile ? { opacity: 0 } : { scale: 0.5, opacity: 0 }}
             transition={isMobile ? { duration: 0.15 } : { type: "spring", stiffness: 350, damping: 25 }}
-            className="flex items-end gap-1 px-2.5 py-1.5 rounded-xl"
+            className="flex items-end gap-1 px-2.5 py-1.5 rounded-none"
             style={{
               background: "var(--color-glass)",
               backdropFilter: "blur(12px) saturate(160%)",
@@ -552,7 +552,7 @@ function DockItem({
       <AnimatePresence>
         {showSubmenu && subItems && subItems.length > 0 && !isDragging && (
           <motion.div
-            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 p-2 rounded-xl z-50"
+            className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 p-2 rounded-none z-50"
             style={{
               background: "var(--color-bg-secondary)",
               backdropFilter: "blur(12px) saturate(160%)",

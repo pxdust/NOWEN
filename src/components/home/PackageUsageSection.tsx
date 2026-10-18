@@ -383,7 +383,7 @@ function PackageBlock({ plan, currency, density }: { plan: PackagePlan; currency
   const showWeekly = density === 'large' ? Boolean(plan.weekly) : primary === 'weekly'
   return (
     <div
-      className="rounded-xl p-3"
+      className="rounded-none p-3"
       data-density={density}
       data-primary-quota={density === 'medium' ? primary ?? 'none' : undefined}
       style={{ background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-glass-border)' }}
@@ -698,7 +698,7 @@ export function PackageUsageSection() {
       onMouseLeave={rotating ? () => setCarouselPaused(false) : undefined}
     >
       <div
-        className={`overflow-hidden backdrop-blur-xl ${tier === 'mini' ? 'rounded-[28px]' : 'rounded-2xl'}`}
+        className="overflow-hidden rounded-none backdrop-blur-xl"
         style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
       >
         {collapsed && (
@@ -811,7 +811,7 @@ export function PackageUsageSection() {
                 <div className="space-y-3" aria-busy="true" aria-label={t('packageUsage.loading')}>
                   <div className="h-3 w-16 rounded" style={{ background: 'var(--color-bg-tertiary)' }} />
                   <div className="h-8 w-32 rounded" style={{ background: 'var(--color-bg-tertiary)' }} />
-                  <div className="h-16 rounded-xl" style={{ background: 'var(--color-bg-tertiary)' }} />
+                  <div className="h-16 rounded-none" style={{ background: 'var(--color-bg-tertiary)' }} />
                 </div>
               )}
               {!loading && error && (
