@@ -153,18 +153,19 @@
       "weeklyInCombo": "每周额度",
       "combo": "周日限额"
     },
+    "balanceShort": "余额",
     "drag": "拖动套餐",
     "collapse": "收起套餐",
     "expand": "展开套餐",
-    "resize": {
-      "n": "从上边调整套餐大小",
-      "s": "从下边调整套餐大小",
-      "e": "从右边调整套餐大小",
-      "w": "从左边调整套餐大小",
-      "ne": "从右上角调整套餐大小",
-      "nw": "从左上角调整套餐大小",
-      "se": "从右下角调整套餐大小",
-      "sw": "从左下角调整套餐大小"
+    "tier": {
+      "menu": "套餐尺寸",
+      "mini": "迷你",
+      "medium": "适中",
+      "large": "大"
+    },
+    "ring": {
+      "daily": "日限额",
+      "weekly": "周限额"
     },
     "unlimited": "不限额",
     "usedUnlimited": "{{used}} · 不限额",
@@ -665,6 +666,11 @@
         "amount_money": "金额",
         "detail_path": "套餐详情路径",
         "detail_path_hint": "留空时 NewAPI 使用 /api/subscription/self，并尝试用 /api/subscription/plans 补全套餐名和重置周期",
+        "default_tier": "首页默认尺寸",
+        "default_tier_hint": "还没在浏览器里右键选择尺寸时使用。个人选择只保存在那台设备上，不会改这里的默认值。",
+        "tier_mini": "迷你",
+        "tier_medium": "适中",
+        "tier_large": "大",
         "enabled": "首页显示",
         "disabled": "首页隐藏",
         "shape_hint": "余额来自 /api/user/self 的 quota÷500000。套餐额度同样按配额 ÷500000。amount_used/amount_total 是重置周期对应的额度，weekly_amount_used/weekly_amount_total 是每周额度；两个总额都大于 0 时同时显示「周日限额」（每日额度 + 每周额度），即使 plan_quota_reset_period 为 daily。只有周额度显示「周限额」，只有日额度显示「仅日限额」。limit_type 为「周日限额」但没有拆开的日/周数字时，不会把同一份 amount 当成周限额，也不会编造缺失的数字。limit 为 0 或 unlimited 显示「不限额」。",

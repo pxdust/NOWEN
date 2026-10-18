@@ -59,6 +59,7 @@ router.get('/', optionalAuthMiddleware, async (req: Request, res: Response) => {
       packages: [],
       updatedAt: null,
       refreshIntervalMin: 0,
+      defaultTier: 'large',
     })
   }
   if (!access.isPublic && !(req as Request & { user?: unknown }).user) {
@@ -69,7 +70,7 @@ router.get('/', optionalAuthMiddleware, async (req: Request, res: Response) => {
     res.json({ ...dto, enabled: true })
   } catch (error) {
     console.error('套餐用量查询失败:', error instanceof Error ? error.message : error)
-    res.status(500).json({ ok: false, enabled: true, error: 'upstream_failed', balance: null, currency: 'USD', packages: [], updatedAt: null, refreshIntervalMin: 0 })
+    res.status(500).json({ ok: false, enabled: true, error: 'upstream_failed', balance: null, currency: 'USD', packages: [], updatedAt: null, refreshIntervalMin: 0, defaultTier: 'large' })
   }
 })
 

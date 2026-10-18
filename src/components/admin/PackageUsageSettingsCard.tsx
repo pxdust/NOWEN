@@ -5,6 +5,7 @@ import {
   fetchPackageUsageConfig,
   savePackageUsageConfig,
   testPackageUsage,
+  type PackageSizeTier,
   type PackageUsageConfig,
   type WidgetVisibility,
 } from '../../lib/api'
@@ -49,6 +50,7 @@ export function PackageUsageSettingsCard({
   const [currency, setCurrency] = useState('USD')
   const [packageDetailPath, setPackageDetailPath] = useState('')
   const [amountMode, setAmountMode] = useState<PackageUsageConfig['amountMode']>('quota')
+  const [defaultTier, setDefaultTier] = useState<PackageSizeTier>('large')
   const [enabled, setEnabled] = useState(visibility.packageUsage === true)
   const [access, setAccess] = useState<'public' | 'private'>(visibility.packageUsageAccess === 'public' ? 'public' : 'private')
   const [saving, setSaving] = useState(false)
@@ -76,6 +78,7 @@ export function PackageUsageSettingsCard({
         setCurrency(config.currency || 'USD')
         setPackageDetailPath(config.packageDetailPath || '')
         setAmountMode(config.amountMode || 'quota')
+        setDefaultTier(config.defaultTier === 'mini' || config.defaultTier === 'medium' || config.defaultTier === 'large' ? config.defaultTier : 'large')
       })
       .catch(() => {
         if (!cancelled) setMessage(t('admin.settings.package.load_error'))
@@ -103,6 +106,7 @@ export function PackageUsageSettingsCard({
     currency,
     packageDetailPath,
     amountMode,
+    defaultTier,
     ...(accessToken && !accessToken.startsWith('•') ? { accessToken } : {}),
   })
 
@@ -235,6 +239,27 @@ export function PackageUsageSettingsCard({
         <Field label={t('admin.settings.package.detail_path')} hint={t('admin.settings.package.detail_path_hint')}>
           <input value={packageDetailPath} onChange={(event) => setPackageDetailPath(event.target.value)} placeholder="/api/subscription/self" className="w-full rounded-xl px-4 py-3 text-sm outline-none" style={inputStyle} />
         </Field>
+        <div className="md:col-span-2">
+          <span className="mb-1.5 block text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{t('admin.settings.package.default_tier')}</span>
+          <div className="flex flex-wrap gap-2">
+            {(['mini', 'medium', 'large'] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                aria-pressed={defaultTier === item}
+                onClick={() => setDefaultTier(item)}
+                className="rounded-full px-3 py-1.5 text-sm"
+                style={{
+                  background: defaultTier === item ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
+                  color: defaultTier === item ? 'white' : 'var(--color-text-secondary)',
+                }}
+              >
+                {t(`admin.settings.package.tier_${item}`)}
+              </button>
+            ))}
+          </div>
+          <span className="mt-1 block text-xs" style={{ color: 'var(--color-text-muted)' }}>{t('admin.settings.package.default_tier_hint')}</span>
+        </div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-3">

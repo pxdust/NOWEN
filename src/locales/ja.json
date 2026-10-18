@@ -151,18 +151,19 @@
       "weeklyInCombo": "1週間の上限",
       "combo": "週次と日次の上限"
     },
+    "balanceShort": "残高",
     "drag": "プランをドラッグ",
     "collapse": "プランを折りたたむ",
     "expand": "プランを展開",
-    "resize": {
-      "n": "上端からプランのサイズを変更",
-      "s": "下端からプランのサイズを変更",
-      "e": "右端からプランのサイズを変更",
-      "w": "左端からプランのサイズを変更",
-      "ne": "右上からプランのサイズを変更",
-      "nw": "左上からプランのサイズを変更",
-      "se": "右下からプランのサイズを変更",
-      "sw": "左下からプランのサイズを変更"
+    "tier": {
+      "menu": "プランのサイズ",
+      "mini": "ミニ",
+      "medium": "標準",
+      "large": "大"
+    },
+    "ring": {
+      "daily": "日次上限",
+      "weekly": "週間上限"
     },
     "unlimited": "上限なし",
     "usedUnlimited": "{{used}} · 上限なし",
@@ -663,6 +664,11 @@
         "amount_money": "金額",
         "detail_path": "プラン詳細パス",
         "detail_path_hint": "空欄のとき NewAPI は /api/subscription/self を使い、/api/subscription/plans で名前とリセット周期を補います",
+        "default_tier": "ホームの既定サイズ",
+        "default_tier_hint": "ブラウザで右クリック選択するまで使います。その選択は端末だけに保存され、ここ既定値は変わりません。",
+        "tier_mini": "ミニ",
+        "tier_medium": "標準",
+        "tier_large": "大",
         "enabled": "ホームに表示",
         "disabled": "ホームで非表示",
         "shape_hint": "残高は /api/user/self の quota÷500000 です。各プランは返ってきた項目だけを表示します。週のみ、日のみ、または両方（週次と日次。limit_type が「周日限额」のときも含む）。両方ある場合は週のみとは表示しません。無い数字は作りません。limit が 0 または unlimited は上限なしです。",
