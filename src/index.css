@@ -446,7 +446,7 @@ body::before {
 .vibe-card {
   position: relative;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);

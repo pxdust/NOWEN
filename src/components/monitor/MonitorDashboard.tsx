@@ -166,7 +166,7 @@ export function MonitorDashboard({
 
   return (
     <div className={cn(
-      "relative p-4 rounded-2xl overflow-hidden",
+      "relative p-4 rounded-none overflow-hidden",
       // 日间模式 - 透明
       "bg-transparent border-slate-200/40 shadow-none",
       // 夜间模式

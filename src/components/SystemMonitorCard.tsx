@@ -932,7 +932,7 @@ export function SystemMonitorCard({ className, forceCollapsed }: { className?: s
 
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl",
+      "relative overflow-hidden rounded-none",
       "backdrop-blur-xl",
       "p-4",
       effectiveCollapsed ? "h-auto" : "h-full min-h-[280px]",

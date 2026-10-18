@@ -420,7 +420,7 @@ export function HardwareIdentityCard({ className, forceCollapsed }: { className?
 
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl",
+      "relative overflow-hidden rounded-none",
       "backdrop-blur-xl",
       effectiveCollapsed ? "h-auto" : "h-full",
       isMobile ? "p-3" : "p-4",

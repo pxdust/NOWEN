@@ -625,7 +625,7 @@ export function ProcessMatrixCard({ className, forceCollapsed }: { className?: s
   return (
     <div
       className={cn(
-        "relative rounded-2xl overflow-hidden",
+        "relative rounded-none overflow-hidden",
         "backdrop-blur-xl",
         "p-3 sm:p-4 min-w-0",
         effectiveCollapsed ? "h-auto" : "h-full",
@@ -989,7 +989,7 @@ export function ProcessMatrixCard({ className, forceCollapsed }: { className?: s
 
       {/* 边框发光效果 */}
       <div
-        className="absolute inset-0 rounded-2xl pointer-events-none"
+        className="absolute inset-0 rounded-none pointer-events-none"
         style={{
           boxShadow: isDark
             ? "inset 0 0 30px rgba(34, 197, 94, 0.05)"

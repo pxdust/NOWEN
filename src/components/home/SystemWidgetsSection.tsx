@@ -47,7 +47,7 @@ function useIsDesktop() {
 function ChipFallback() {
   return (
     <div
-      className="h-12 rounded-2xl"
+      className="h-12 rounded-none"
       style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
     />
   )

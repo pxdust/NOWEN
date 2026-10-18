@@ -159,7 +159,7 @@ export function MonitorTicker({
       "border",
       "border-slate-200/80 dark:border-white/[0.08]",
       // 圆角
-      "rounded-2xl",
+      "rounded-none",
       // 顶部高光 - 适配主题
       "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]",
       // 字体和交互

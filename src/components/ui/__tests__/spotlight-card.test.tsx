@@ -29,6 +29,7 @@ describe('SpotlightCard middle click', () => {
 
     const card = container.querySelector<HTMLElement>('.test-card')
     expect(card).toBeTruthy()
+    expect(card!.className).toContain('rounded-none')
 
     auxClick(card!, 1)
 

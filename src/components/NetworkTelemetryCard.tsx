@@ -399,7 +399,7 @@ export function NetworkTelemetryCard({ className, forceCollapsed }: { className?
 
   return (
     <div className={cn(
-      "relative rounded-2xl",
+      "relative rounded-none",
       "backdrop-blur-xl",
       "p-3 sm:p-4 min-w-0",
       effectiveCollapsed ? "h-auto" : "h-full",
@@ -411,7 +411,7 @@ export function NetworkTelemetryCard({ className, forceCollapsed }: { className?
       {/* 背景网格 */}
       <div 
         className={cn(
-          "absolute inset-0 rounded-2xl overflow-hidden",
+          "absolute inset-0 rounded-none overflow-hidden",
           isDark ? "opacity-[0.02]" : "opacity-[0.04]"
         )}
         style={{
@@ -425,7 +425,7 @@ export function NetworkTelemetryCard({ className, forceCollapsed }: { className?
       />
 
       {/* 背景装饰 */}
-      <div className="absolute inset-0 overflow-hidden rounded-2xl">
+      <div className="absolute inset-0 overflow-hidden rounded-none">
         <div className={cn(
           "absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-radial",
           isDark 

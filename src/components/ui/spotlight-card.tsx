@@ -153,7 +153,7 @@ export function SpotlightCard({
         onClick={onClick}
         onContextMenu={onContextMenu}
         className={cn(
-          'relative overflow-hidden rounded-2xl backdrop-blur-md',
+          'relative overflow-hidden rounded-none backdrop-blur-md',
           'transition-transform duration-300 hover:-translate-y-1',
           onClick && 'cursor-pointer active:scale-[0.98]',
           sizeClasses[size],
@@ -181,7 +181,7 @@ export function SpotlightCard({
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={cn(
-        'group spotlight-card relative overflow-hidden rounded-2xl backdrop-blur-md',
+        'group spotlight-card relative overflow-hidden rounded-none backdrop-blur-md',
         onClick && 'cursor-pointer',
         sizeClasses[size],
         className

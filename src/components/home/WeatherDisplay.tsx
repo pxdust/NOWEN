@@ -73,8 +73,8 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
     <div className="relative inline-block" ref={panelRef}>
       <motion.div
         className={compact
-          ? 'inline-flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer select-none'
-          : 'mt-4 inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-xl cursor-pointer select-none'}
+          ? 'inline-flex items-center gap-1.5 px-2 py-1 rounded-none cursor-pointer select-none'
+          : 'mt-4 inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-none cursor-pointer select-none'}
         style={{
           background: 'var(--color-glass)',
           border: '1px solid var(--color-glass-border)',
@@ -208,7 +208,7 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
       <AnimatePresence>
         {isExpanded && weather.forecast.length > 0 && (
           <motion.div
-            className="fixed left-4 right-4 sm:absolute sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 mx-auto max-w-[420px] rounded-2xl overflow-hidden backdrop-blur-xl"
+            className="fixed left-4 right-4 sm:absolute sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 mt-2 z-50 mx-auto max-w-[420px] rounded-none overflow-hidden backdrop-blur-xl"
             style={{
               background: 'var(--color-glass)',
               border: '1px solid var(--color-glass-border)',

@@ -471,7 +471,7 @@ export function VitalSignsCard({ className, forceCollapsed }: { className?: stri
 
   return (
     <div className={cn(
-      "relative rounded-2xl backdrop-blur-xl p-3 sm:p-4 min-w-0",
+      "relative rounded-none backdrop-blur-xl p-3 sm:p-4 min-w-0",
       effectiveCollapsed ? "h-auto" : "h-full",
       isDark 
         ? "bg-gradient-to-br from-slate-900/95 via-slate-800/80 to-slate-900/95 border border-cyan-500/20"
@@ -479,7 +479,7 @@ export function VitalSignsCard({ className, forceCollapsed }: { className?: stri
       className
     )}>
       {/* 背景网格 */}
-      <div className={cn("absolute inset-0 rounded-2xl overflow-hidden", isDark ? "opacity-[0.02]" : "opacity-[0.04]")}
+      <div className={cn("absolute inset-0 rounded-none overflow-hidden", isDark ? "opacity-[0.02]" : "opacity-[0.04]")}
         style={{
           backgroundImage: isDark 
             ? `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`

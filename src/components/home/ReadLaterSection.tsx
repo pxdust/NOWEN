@@ -58,7 +58,7 @@ function HeroBookmark({
   void isLiteMode;
   return (
       <div
-        className="group relative p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-lg overflow-hidden"
+        className="group relative p-6 rounded-none cursor-pointer transition-all duration-300 hover:shadow-lg overflow-hidden"
         style={{
           background: 'var(--color-glass)',
           border: '1px solid var(--color-glass-border)',
@@ -191,7 +191,7 @@ function ListItem({
 
   return (
     <motion.div
-      className="group flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all"
+      className="group flex items-center gap-4 p-4 rounded-none cursor-pointer transition-all"
       style={{
         background: 'var(--color-glass)',
         border: '1px solid var(--color-glass-border)',
@@ -305,7 +305,7 @@ export function ReadLaterSection({
   return (
     <section className="mb-8" data-section="read-later">
       <div
-        className="flex items-center gap-2 rounded-xl px-3 py-2"
+        className="flex items-center gap-2 rounded-none px-3 py-2"
         style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)' }}
       >
         <button

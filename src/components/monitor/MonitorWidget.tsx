@@ -112,7 +112,7 @@ export function MonitorWidget({
       onMouseLeave={() => setIsHovered(false)}
     >
       <motion.div
-        className="relative flex items-center rounded-full"
+        className="relative flex items-center rounded-none"
         style={{
           background: isDark
             ? 'rgba(15, 23, 42, 0.75)'

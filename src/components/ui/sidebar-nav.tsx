@@ -325,7 +325,7 @@ export function SidebarNav({ items, pinnedCount = 0, className = "" }: SidebarNa
 
               {/* 内层容器 - 带圆角和毛玻璃效果 */}
               <motion.div
-                className="rounded-2xl backdrop-blur-xl overflow-hidden flex flex-col"
+                className="rounded-none backdrop-blur-xl overflow-hidden flex flex-col"
                 style={{
                   background: "var(--color-glass)",
                   border: "1px solid var(--color-glass-border)",
