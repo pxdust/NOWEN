@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BookmarkIconButton } from '../BookmarkIconButton'
@@ -67,6 +69,40 @@ describe('BookmarkIconButton', () => {
     fireEvent.focus(button)
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
     expect(screen.queryByText('代码托管，极简模式不该显示这段')).not.toBeInTheDocument()
+
+    const hit = button.parentElement
+    expect(hit).toHaveClass('bookmark-icon-hit')
+    expect(hit?.className.split(/\s+/) ?? []).not.toContain('group')
+  })
+
+  it('lifts only the hovered icon, not every icon inside a parent group', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8')
+    expect(css).not.toMatch(/\.group:hover \.bookmark-icon-glyph/)
+    expect(css).not.toMatch(/\.group:focus-within \.bookmark-icon-glyph/)
+    expect(css).not.toMatch(/\.group:hover \.bookmark-icon-stage/)
+    expect(css).toContain('.bookmark-icon-hit:hover .bookmark-icon-glyph')
+    expect(css).toContain('.bookmark-icon-hit:focus-within .bookmark-icon-glyph')
+    expect(css).toContain('.bookmark-icon-hit:hover .bookmark-icon-stage::after')
+    expect(css).toContain('.bookmark-icon-hit:focus-within .bookmark-icon-stage::after')
+
+    render(
+      <div className="group">
+        <BookmarkIconButton bookmark={bookmark} isInternal={false} onContextMenu={() => undefined} />
+        <BookmarkIconButton
+          bookmark={{ ...bookmark, id: 'gl', title: 'GitLab', url: 'https://gitlab.com' }}
+          isInternal={false}
+          onContextMenu={() => undefined}
+        />
+      </div>,
+    )
+
+    const hits = document.querySelectorAll('.bookmark-icon-hit')
+    expect(hits).toHaveLength(2)
+    for (const hit of hits) {
+      expect(hit.className.split(/\s+/)).not.toContain('group')
+      expect(hit.querySelector('.bookmark-icon-glyph')).toBeTruthy()
+    }
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 
   it('scales the shared tile for mini and large, and prefers a custom icon url', () => {

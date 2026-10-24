@@ -88,7 +88,8 @@ export function BookmarkIconButton({
   }
 
   return (
-    <div className="group relative h-full w-full">
+    // 不用 Tailwind group：分类区块自己是 group（编辑按钮），.group:hover 会把整排图标一起抬起来。
+    <div className="bookmark-icon-hit relative h-full w-full">
       {/* 用 div 而不是 button，避免和拖拽排序抢指针（dnd 外层已经是可拖拽节点）。 */}
       <div
         role="button"

@@ -995,8 +995,9 @@ button:focus {
   transition: transform 200ms ease, filter 200ms ease;
 }
 
-.group:hover .bookmark-icon-glyph,
-.group:focus-within .bookmark-icon-glyph {
+/* 只跟这一颗图标走。分类标题用了 Tailwind group，写成 .group:hover 会让整排一起抬起。 */
+.bookmark-icon-hit:hover .bookmark-icon-glyph,
+.bookmark-icon-hit:focus-within .bookmark-icon-glyph {
   transform: translateY(-3px) scale(1.06);
   filter:
     drop-shadow(0 1px 0 rgba(255, 255, 255, 1))
@@ -1004,8 +1005,8 @@ button:focus {
     drop-shadow(0 16px 18px rgba(24, 12, 48, 0.5));
 }
 
-.group:hover .bookmark-icon-stage::after,
-.group:focus-within .bookmark-icon-stage::after {
+.bookmark-icon-hit:hover .bookmark-icon-stage::after,
+.bookmark-icon-hit:focus-within .bookmark-icon-stage::after {
   transform: translateY(78%) scaleX(0.86);
   opacity: 0.9;
 }
@@ -1034,10 +1035,10 @@ button:focus {
     display: none !important;
   }
 
-  .group:hover .bookmark-icon-glyph,
-  .group:focus-within .bookmark-icon-glyph,
-  .group:hover .bookmark-icon-stage::after,
-  .group:focus-within .bookmark-icon-stage::after {
+  .bookmark-icon-hit:hover .bookmark-icon-glyph,
+  .bookmark-icon-hit:focus-within .bookmark-icon-glyph,
+  .bookmark-icon-hit:hover .bookmark-icon-stage::after,
+  .bookmark-icon-hit:focus-within .bookmark-icon-stage::after {
     transform: none;
   }
 }
