@@ -35,6 +35,7 @@ function renderCard(onSave = vi.fn().mockResolvedValue(undefined), onChange = vi
 
 afterEach(() => {
   cleanup()
+  window.localStorage.removeItem('nowen-minimal-mode')
 })
 
 describe('WidgetSettingsCard 保存', () => {
@@ -59,5 +60,28 @@ describe('WidgetSettingsCard 保存', () => {
     }))
     expect(onSave).toHaveBeenCalledTimes(1)
     expect(onSave.mock.calls[0]).toEqual([])
+  })
+
+  it('极简模式只改本机偏好，不进入仪表可见性也不触发保存', () => {
+    const store = new Map<string, string>()
+    window.localStorage.getItem = (key: string) => store.get(key) ?? null
+    window.localStorage.setItem = (key: string, value: string) => { store.set(key, String(value)) }
+    window.localStorage.removeItem = (key: string) => { store.delete(key) }
+
+    const { onSave, onChange } = renderCard()
+    const toggle = screen.getByRole('switch', { name: '极简模式' })
+
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+    fireEvent.click(toggle)
+
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    expect(store.get('nowen-minimal-mode')).toBe('1')
+    expect(onChange).not.toHaveBeenCalled()
+    expect(onSave).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: '保存配置' }))
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onSave.mock.calls[0]).toEqual([])
+    expect(onChange).not.toHaveBeenCalled()
   })
 })

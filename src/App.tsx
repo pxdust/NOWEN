@@ -55,6 +55,7 @@ import {
   BookmarkDragOverlay,
   SystemWidgetsSection,
   PackageUsageSection,
+  MinimalCollapse,
 } from "./components/home";
 import { CloudDrawerHost } from "./components/home/notes/CloudDrawerHost";
 import { QuickNotesDrawer } from "./components/home/notes/QuickNotesDrawer";
@@ -86,6 +87,8 @@ import { useBookmarkStore } from "./hooks/useBookmarkStore";
 import { useThemeContext } from "./hooks/useTheme";
 import { useWeather } from "./hooks/useWeather";
 import { useSiteSettings } from "./hooks/useSiteSettings";
+import { useMinimalMode } from "./hooks/useMinimalMode";
+import { applyMinimalWidgetVisibility, isEditableShortcutTarget, isMinimalModeShortcut } from "./lib/minimalMode";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useAuth } from "./hooks/useAuth";
 import { useNetworkEnv, getBookmarkUrl } from "./hooks/useNetworkEnv";
@@ -298,6 +301,8 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
     i18n.changeLanguage(nextLang);
   }, [i18n]);
 
+  const { enabled: minimalMode, toggle: toggleMinimalMode } = useMinimalMode();
+
   // 根据每个组件的访问模式和登录状态计算有效的仪表可见性
   const effectiveWidgetVisibility = useMemo(() => {
     if (isLoggedIn) return widgetVisibility
@@ -317,6 +322,12 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
         : (isLoggedIn ? widgetVisibility.packageUsage : false),
     }
   }, [widgetVisibility, isLoggedIn])
+
+  // 极简模式只遮住运维组件的布尔开关。AI 助手和访问模式保持原样，关闭后回到这份可见性。
+  const shownWidgetVisibility = useMemo(
+    () => (minimalMode ? applyMinimalWidgetVisibility(effectiveWidgetVisibility) : effectiveWidgetVisibility),
+    [minimalMode, effectiveWidgetVisibility],
+  );
 
   const dockItems = createDockItems(isDark, toggleDarkMode, t, toggleLanguage, handleCardViewModeChange, cardViewMode);
   const effectiveMenuVisibility = useMemo(
@@ -342,11 +353,15 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           setIsAiAssistantOpen(prev => !prev);
         }
       }
+      if (isMinimalModeShortcut(e) && !isEditableShortcutTarget(e.target)) {
+        e.preventDefault();
+        toggleMinimalMode();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isLoggedIn, showSearch, effectiveWidgetVisibility.aiAssistant]);
+  }, [isLoggedIn, showSearch, effectiveWidgetVisibility.aiAssistant, toggleMinimalMode]);
 
   // ========== Bookmarklet / 外部 URL 唤起：?action=add&url=&title= ==========
   // 用户从任意网页点击 NOWEN Bookmarklet，会带参数跳转到本站，自动打开添加书签弹窗
@@ -805,7 +820,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       {!isLiteMode && <Meteors number={15} />}
 
       {/* Sidebar Navigation */}
-      {enableSidebarNav && (
+      {enableSidebarNav && !minimalMode && (
         <SidebarNav
           items={[
             ...categories
@@ -830,7 +845,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       )}
 
       {/* Main Content */}
-      <div className="min-h-screen px-4 pb-20 sm:px-6 lg:px-8">
+      <div className="min-h-screen px-4 pb-20 sm:px-6 lg:px-8" data-minimal-mode={minimalMode ? 'on' : 'off'}>
         <div className="mx-auto min-w-0 max-w-[1440px]">
           {/* Hero Section */}
           <HeroSection
@@ -845,14 +860,16 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             onRefreshWeather={refreshWeather}
             onCityChange={handleWeatherCityChange}
             onOpenSearch={() => setIsSpotlightOpen(true)}
-            statusExtra={effectiveWidgetVisibility.dockMiniMonitor !== false ? (
+            minimalMode={minimalMode}
+            onToggleMinimal={toggleMinimalMode}
+            statusExtra={shownWidgetVisibility.dockMiniMonitor !== false ? (
               <div className="hidden md:block">
                 <Suspense fallback={null}>
                   <SystemMonitor initialMode="mini" size="sm" showLoading={false} storageKey="nowen-statusbar-monitor" />
                 </Suspense>
               </div>
             ) : undefined}
-            tabletNav={showContentNav ? (
+            tabletNav={!minimalMode && showContentNav ? (
               <button
                 type="button"
                 className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg md:inline-flex lg:hidden"
@@ -869,6 +886,8 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             ) : undefined}
           />
 
+          {/* 极简模式收起书签网格和运维卡片。搜索（⌘K）仍可找到书签；套餐尺寸档位留在各自的 localStorage。 */}
+          <MinimalCollapse hidden={minimalMode}>
           {activeTag && (
             <motion.div
               className="mb-6 flex flex-wrap items-center gap-2 rounded-none px-4 py-3 backdrop-blur-xl"
@@ -1042,11 +1061,12 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           {!activeTag && bookmarks.length === 0 && !isLoading && (
             <EmptyState isLiteMode={isLiteMode ?? false} isLoggedIn={isLoggedIn} onAddBookmark={() => setIsAddModalOpen(true)} />
           )}
+          </MinimalCollapse>
         </div>
       </div>
 
       {/* Footer 备案信息 */}
-      {siteSettings.footerText && (
+      {siteSettings.footerText && !minimalMode && (
         <div className="w-full text-center pb-20 md:pb-24 pt-8 px-4">
           <p
             className="text-xs leading-relaxed"
@@ -1158,7 +1178,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
 
     {/* 以下组件放在 BackgroundWrapper 外部，避免被其 stacking context 限制 z-index */}
 
-    {enableSidebarNav && (
+    {enableSidebarNav && !minimalMode && (
       <MobileContentNavigation
         categories={mobileCategoryItems}
         tags={tagStats}
@@ -1174,18 +1194,18 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       />
     )}
 
-    {/* 桌面端：Dock（自主管理 fixed 定位 + 自由拖拽） */}
-    <div className="hidden md:block">
+    {/* 桌面端：Dock（自主管理 fixed 定位 + 自由拖拽）。极简模式收起，避免新标签页被操作栏占满。 */}
+    {!minimalMode && <div className="hidden md:block">
       <FloatingDock
         items={filteredDockItems.map((item) => ({
           ...item,
           onClick: item.href ? undefined : (item.onClick || (() => handleDockClick(item.id))),
         }))}
       />
-    </div>
+    </div>}
 
     {/* 移动端：底部固定栏（状态栏 + 内容导航 + 能量球） */}
-    <div className="md:hidden">
+    {!minimalMode && <div className="md:hidden">
       <MobileFloatingDock
           items={filteredDockItems
             .filter((item) => item.id !== "home")
@@ -1205,7 +1225,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             })),
           }))}
         leftSlot={
-          effectiveWidgetVisibility.mobileTicker !== false
+          shownWidgetVisibility.mobileTicker !== false
             ? <Suspense fallback={null}><SystemMonitor initialMode="inline" compact showLoading={false} /></Suspense>
             : undefined
         }
@@ -1216,7 +1236,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           active: Boolean(activeTag),
         } : undefined}
       />
-    </div>
+    </div>}
 
     {/* 灵感云·同步中心抽屉（被 SidebarNav 模块项触发） */}
     <CloudDrawerHost

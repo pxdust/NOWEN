@@ -9,5 +9,6 @@ export { ReadLaterSection } from './ReadLaterSection';
 export { EmptyState } from './EmptyState';
 export { SystemWidgetsSection } from './SystemWidgetsSection';
 export { PackageUsageSection } from './PackageUsageSection';
+export { MinimalCollapse } from './MinimalCollapse';
 export { BookmarkDragOverlay } from './BookmarkDragOverlay';
 export { QuickNotes } from './QuickNotes';
