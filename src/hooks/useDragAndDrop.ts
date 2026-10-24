@@ -76,7 +76,7 @@ export function useDragAndDrop({ bookmarks, reorderBookmarks, disabled }: UseDra
         }
       }
     }
-  }, [bookmarks, reorderBookmarks]);
+  }, [bookmarks, disabled, reorderBookmarks]);
 
   // 拖拽取消
   const handleDragCancel = useCallback(() => {

@@ -61,6 +61,12 @@
     "view_compact": "コンパクト表示",
     "view_standard": "標準表示",
     "view_comfortable": "ゆったり表示",
+    "presentation": "ブックマーク表示",
+    "layout_icons": "アイコングリッド",
+    "layout_cards": "詳細カード",
+    "icon_tier_mini": "ミニ",
+    "icon_tier_medium": "標準",
+    "icon_tier_large": "大",
     "modal": {
       "analyzing": "スマート分析中...",
       "url_placeholder": "リンクを貼り付けて自動取得...",
