@@ -87,7 +87,7 @@ import { useMinimalMode } from "./hooks/useMinimalMode";
 import { useBookmarkPresentation } from "./hooks/useBookmarkPresentation";
 import { applyMinimalWidgetVisibility, isEditableShortcutTarget, isMinimalModeShortcut } from "./lib/minimalMode";
 import type { BookmarkIconTier } from "./lib/bookmarkPresentation";
-import { BookmarkIconButton } from "./components/home/BookmarkIconButton";
+import { BOOKMARK_ICON_TIER_CLASS, BookmarkIconButton } from "./components/home/BookmarkIconButton";
 import { buildBookmarkPresentationMenuItems } from "./components/home/BookmarkGridToolbar";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useAuth } from "./hooks/useAuth";
@@ -1532,12 +1532,12 @@ function CategorySkeleton({
   const config = VIEW_MODE_CONFIG[cardViewMode];
   const isCompact = cardViewMode === 'compact';
   if (iconMode) {
-    const frame = iconTier === 'mini' ? 'h-10 w-10' : iconTier === 'large' ? 'h-[4.75rem] w-[4.75rem]' : 'h-14 w-14';
+    const metric = BOOKMARK_ICON_TIER_CLASS[iconTier];
     return (
       <div className={`${ICON_TIER_GRID_CLASS[iconTier]} relative z-10`}>
         {Array.from({ length: displayCount }).map((_, i) => (
-          <div key={i} className="flex flex-col items-center gap-2 px-1 py-1">
-            <div className={`${frame} rounded-none animate-pulse`} style={{ background: `${color}22` }} />
+          <div key={i} className={`flex flex-col items-center ${metric.button}`}>
+            <div className={`${metric.frame} rounded-none animate-pulse`} style={{ background: `${color}22` }} />
             <div className="h-2 w-10 rounded-none animate-pulse" style={{ background: 'var(--color-bg-tertiary)' }} />
           </div>
         ))}

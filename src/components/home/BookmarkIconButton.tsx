@@ -26,30 +26,31 @@ export const BOOKMARK_ICON_TIER_CLASS: Record<BookmarkIconTier, {
   button: string
 }> = {
   mini: {
-    frame: 'h-10 w-10',
+    frame: 'h-6 w-10',
     glyph: 'h-6 w-6',
     fallback: 'h-5 w-5',
     label: 'text-[11px] leading-tight line-clamp-1',
-    button: 'gap-1 px-0.5 py-1',
+    button: 'gap-1 px-0.5 py-0.5',
   },
   medium: {
-    frame: 'h-14 w-14',
+    frame: 'h-8 w-14',
     glyph: 'h-8 w-8',
     fallback: 'h-7 w-7',
     label: 'text-xs leading-tight line-clamp-2',
-    button: 'gap-2 px-1 py-1.5',
+    button: 'gap-1 px-1 py-0.5',
   },
   large: {
-    frame: 'h-[4.75rem] w-[4.75rem]',
+    frame: 'h-11 w-[4.75rem]',
     glyph: 'h-11 w-11',
     fallback: 'h-9 w-9',
-    label: 'text-sm leading-snug line-clamp-2',
-    button: 'gap-2.5 px-1.5 py-2',
+    label: 'text-sm leading-tight line-clamp-2',
+    button: 'gap-1.5 px-1.5 py-1',
   },
 }
 
 /**
- * 书签图标磁贴：只显示图标和名称。描述留在悬停提示里。
+ * 书签图标：只显示图标和名称。
+ * 图标网格不挂描述气泡，也不使用原生 title，避免悬停或聚焦时冒出提示。
  * 极简模式和普通首页图标网格都用这一颗。
  */
 export function BookmarkIconButton({
@@ -94,7 +95,6 @@ export function BookmarkIconButton({
         tabIndex={0}
         data-testid="bookmark-icon"
         data-tier={tier}
-        title={bookmark.title}
         aria-label={bookmark.title}
         onClick={open}
         onKeyDown={onKeyDown}
@@ -138,20 +138,6 @@ export function BookmarkIconButton({
           {bookmark.title}
         </span>
       </div>
-      {bookmark.description ? (
-        <span
-          data-testid="bookmark-description"
-          role="tooltip"
-          className="pointer-events-none absolute left-1/2 top-full z-30 mt-1 hidden w-max max-w-[14rem] -translate-x-1/2 rounded-none px-2 py-1 text-left text-[11px] leading-snug group-hover:block"
-          style={{
-            background: onWallpaper ? 'rgba(0,0,0,0.78)' : 'var(--color-bg-secondary)',
-            color: onWallpaper ? 'rgba(255,255,255,0.92)' : 'var(--color-text-secondary)',
-            border: '1px solid var(--color-glass-border)',
-          }}
-        >
-          {bookmark.description}
-        </span>
-      ) : null}
     </div>
   )
 }
