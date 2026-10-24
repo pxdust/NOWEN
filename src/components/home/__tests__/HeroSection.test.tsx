@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import type { ComponentProps } from 'react'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../lib/i18n'
 import { setActiveQuotes } from '../../../data/quotes'
@@ -115,31 +115,6 @@ describe('HeroSection centered stack', () => {
     renderHero({ isLiteMode: true })
 
     expect(screen.queryByTestId('hero-quote')).toBeNull()
-  })
-
-  it('toggles minimal mode from the clock and keeps the time clickable', () => {
-    const onToggleMinimal = vi.fn()
-    renderHero({ onToggleMinimal, minimalMode: false })
-
-    const time = screen.getByTestId('hero-time')
-    expect(time.tagName).toBe('BUTTON')
-    expect(time.className).toContain('cursor-pointer')
-    expect(time).toHaveAttribute('aria-pressed', 'false')
-    expect(time).toHaveAttribute('title', expect.stringContaining('Alt+M'))
-    expect(screen.getByTestId('hero-section').className).toContain('min-h-[25vh]')
-
-    fireEvent.click(time)
-    expect(onToggleMinimal).toHaveBeenCalledTimes(1)
-  })
-
-  it('centers the clock when minimal mode is on', () => {
-    renderHero({ minimalMode: true, onToggleMinimal: () => undefined })
-
-    const section = screen.getByTestId('hero-section')
-    expect(section.className).toContain('min-h-[calc(100vh-8rem)]')
-    expect(section.className).not.toContain('min-h-[25vh]')
-    expect(screen.getByTestId('hero-time')).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: '搜索或输入命令...' })).toBeTruthy()
   })
 
   it('respects weather and lunar toggles', () => {

@@ -204,15 +204,6 @@
     "greeting": "Hello",
     "subtitle": "Let's start exploring"
   },
-  "minimalMode": {
-    "toggle": "Minimal mode",
-    "enterHint": "Click the time to enter minimal mode (Alt+M)",
-    "exitHint": "Click the time to exit minimal mode (Alt+M)",
-    "desc": "Temporarily hides system monitors, package usage, the service hive, and bookmark grids, leaving the wallpaper, clock, and search. Search can still open bookmarks. Stored in this browser only; it does not change the widget switches above.",
-    "localHint": "Local preference. Applies immediately, no need to save.",
-    "on": "On",
-    "off": "Off"
-  },
   "readLater": {
     "title": "Read Later",
     "allRead": "All Read",
