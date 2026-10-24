@@ -233,6 +233,9 @@ export function WidgetSettingsCard({
             <div className="mt-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
               {t('minimalMode.localHint')}
             </div>
+            <div className="mt-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+              {t('bookmark.presentation_where')}
+            </div>
           </div>
           <button
             type="button"
