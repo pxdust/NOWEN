@@ -88,7 +88,7 @@ import { useBookmarkPresentation } from "./hooks/useBookmarkPresentation";
 import { applyMinimalWidgetVisibility, isEditableShortcutTarget, isMinimalModeShortcut } from "./lib/minimalMode";
 import type { BookmarkIconTier } from "./lib/bookmarkPresentation";
 import { BookmarkIconButton } from "./components/home/BookmarkIconButton";
-import { BookmarkGridToolbar, buildBookmarkPresentationMenuItems } from "./components/home/BookmarkGridToolbar";
+import { buildBookmarkPresentationMenuItems } from "./components/home/BookmarkGridToolbar";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useAuth } from "./hooks/useAuth";
 import { useNetworkEnv, getBookmarkUrl } from "./hooks/useNetworkEnv";
@@ -795,22 +795,6 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       : wallpaper?.imageUrl
     : undefined;
 
-  const presentationAnchor = pinnedBookmarks.length > 0
-    ? 'pinned'
-    : (categories.find((category) => (bookmarksByCategory[category.id] || []).length > 0)?.id
-      ?? (uncategorizedBookmarks.length > 0 ? UNCATEGORIZED_ID : null));
-  const bookmarkToolbar = bookmarks.length > 0 ? (
-    <BookmarkGridToolbar
-      layout={bookmarkLayout}
-      tier={bookmarkIconTier}
-      allowCards={!minimalMode}
-      cardViewMode={cardViewMode}
-      onLayoutChange={setBookmarkLayout}
-      onTierChange={chooseBookmarkTier}
-      onCardViewModeChange={handleCardViewModeChange}
-    />
-  ) : null;
-
   // ========== 首页渲染 ==========
   const BackgroundWrapper = isLiteMode ? LiteBackground : AuroraBackground;
   const backgroundProps = isLiteMode
@@ -970,10 +954,6 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
 
           {/* Quick Notes / 灵感速记 — 从首页移除，现以抽屉形式由 dock 触发 */}
 
-          {bookmarkToolbar && !presentationAnchor && (
-            <div className="mb-4">{bookmarkToolbar}</div>
-          )}
-
           <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel} measuring={measuringConfig}>
             {pinnedBookmarks.length > 0 && (
               <motion.section
@@ -990,9 +970,6 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                   <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
                     {pinnedBookmarks.length}
                   </span>
-                  {presentationAnchor === 'pinned' && bookmarkToolbar && (
-                    <div className="ml-auto">{bookmarkToolbar}</div>
-                  )}
                 </div>
                 <SortableContext items={pinnedBookmarks.map((bookmark) => bookmark.id)} strategy={rectSortingStrategy}>
                   <div
@@ -1056,7 +1033,6 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                   cardViewMode={cardViewMode}
                   iconMode={bookmarkIconMode}
                   iconTier={bookmarkIconTier}
-                  presentation={presentationAnchor === category.id ? bookmarkToolbar : null}
                   onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                   onContextMenu={handleContextMenu}
                   onEditCategory={(cat) => {
@@ -1064,7 +1040,6 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                     setCategoryModalMode('edit');
                     setIsCategoryModalOpen(true);
                   }}
-                  onViewModeChange={handleCardViewModeChange}
                   onTagSelect={handleTagSelect}
                   isLoggedIn={isLoggedIn}
                 />
@@ -1085,11 +1060,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                 cardViewMode={cardViewMode}
                 iconMode={bookmarkIconMode}
                 iconTier={bookmarkIconTier}
-                presentation={presentationAnchor === UNCATEGORIZED_ID ? bookmarkToolbar : null}
                 onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                 onContextMenu={handleContextMenu}
                 onEditCategory={() => {}}
-                onViewModeChange={handleCardViewModeChange}
                 onTagSelect={handleTagSelect}
                 isLoggedIn={false}
               />
@@ -1605,11 +1578,9 @@ function CategorySection({
   cardViewMode = 'standard',
   iconMode = false,
   iconTier = 'medium',
-  presentation = null,
   onWallpaper = false,
   onContextMenu,
   onEditCategory,
-  onViewModeChange,
   onTagSelect,
   isLoggedIn,
 }: {
@@ -1624,18 +1595,15 @@ function CategorySection({
   cardViewMode?: 'compact' | 'standard' | 'comfortable';
   iconMode?: boolean;
   iconTier?: BookmarkIconTier;
-  presentation?: React.ReactNode;
   onWallpaper?: boolean;
   onContextMenu: (e: React.MouseEvent, bookmark: Bookmark) => void;
   onEditCategory: (cat: import("./types/bookmark").Category) => void;
-  onViewModeChange?: (mode: 'compact' | 'standard' | 'comfortable') => void;
   onTagSelect: (tag: string) => void;
   isLoggedIn?: boolean;
 }) {
   const { t } = useTranslation();
   const viewportWidth = useViewportWidth();
   const pageStep = iconMode ? loadMoreIconStep(iconTier, viewportWidth) : loadMoreStep(cardViewMode, viewportWidth);
-  void onViewModeChange;
   const baseShowCount = initialShowCount || 8;
   const needsCollapse = collapseThreshold > 0 && categoryBookmarks.length > collapseThreshold;
   const [displayCount, setDisplayCount] = useState(needsCollapse ? baseShowCount : categoryBookmarks.length);
@@ -1705,7 +1673,6 @@ function CategorySection({
             <Edit2 className="w-4 h-4" />
           </button>
         )}
-        {presentation && <div className="ml-auto">{presentation}</div>}
       </div>
 
       <SortableContext items={visibleBookmarks.map(b => b.id)} strategy={rectSortingStrategy}>

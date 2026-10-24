@@ -21,6 +21,7 @@ import { AiSettingsCard } from './AiSettingsCard'
 import { NowenNoteSettingsCard } from './NowenNoteSettingsCard'
 import { PackageUsageSettingsCard } from './PackageUsageSettingsCard'
 import { SiteSettings, WidgetVisibility } from '../../lib/api'
+import type { CardViewMode } from '../../lib/bookmark-grid'
 import { ThemeId } from '../../hooks/useTheme.tsx'
 
 // 设置子标签页类型
@@ -112,6 +113,8 @@ interface SettingsPanelProps {
   siteSettingsError: string
   /** 重新拉取站点设置（nowen-note 一键连接/断开后用来刷新 token 状态） */
   onReloadSiteSettings?: () => Promise<void>
+  /** 详细卡片密度立刻写入站点设置。布局和尺寸由首页显示面板自己记在本机。 */
+  onCardViewModeChange?: (mode: CardViewMode) => void
   // 主题设置
   themeId: ThemeId
   isDark: boolean
@@ -156,6 +159,7 @@ export function SettingsPanel({
   siteSettingsSuccess,
   siteSettingsError,
   onReloadSiteSettings,
+  onCardViewModeChange,
   // 主题设置
   themeId,
   isDark,
@@ -395,6 +399,7 @@ export function SettingsPanel({
               isSaving={isSavingSiteSettings}
               success={siteSettingsSuccess}
               error={siteSettingsError}
+              onCardViewModeChange={onCardViewModeChange}
             />
           )}
 

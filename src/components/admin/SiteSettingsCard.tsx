@@ -30,6 +30,8 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { SiteSettings, SearchEngineConfig } from '../../lib/api'
+import type { CardViewMode } from '../../lib/bookmark-grid'
+import { BookmarkPresentationSettings } from './BookmarkPresentationSettings'
 
 // 预置搜索引擎列表
 const BUILTIN_SEARCH_ENGINES: SearchEngineConfig[] = [
@@ -48,6 +50,8 @@ interface SiteSettingsCardProps {
   isSaving: boolean
   success: boolean
   error: string
+  /** 详细卡片密度。布局和尺寸在组件内写本机存储，这里只负责站点设置。 */
+  onCardViewModeChange?: (mode: CardViewMode) => void
 }
 
 interface SettingsSectionProps {
@@ -97,6 +101,7 @@ export function SiteSettingsCard({
   isSaving,
   success,
   error,
+  onCardViewModeChange,
 }: SiteSettingsCardProps) {
   const { t } = useTranslation()
   const [isDragging, setIsDragging] = useState(false)
@@ -126,7 +131,7 @@ export function SiteSettingsCard({
       id: 'display' as const,
       icon: CloudSun,
       title: t('admin.settings.site.section_display', '首页显示'),
-      description: t('admin.settings.site.section_display_desc', '天气、农历等首页信息'),
+      description: t('admin.settings.site.section_display_desc', '天气、农历与书签样式'),
     },
     {
       id: 'features' as const,
@@ -639,10 +644,18 @@ export function SiteSettingsCard({
             <SettingsSection
               icon={<CloudSun className="w-4 h-4" />}
               title={t('admin.settings.site.section_display', '首页显示')}
-              description={t('admin.settings.site.section_display_desc', '天气、农历等首页信息')}
+              description={t('admin.settings.site.section_display_desc', '天气、农历与书签样式')}
               defaultOpen
               hidden={activeSection !== 'display'}
             >
+            <BookmarkPresentationSettings
+              cardViewMode={settings.cardViewMode || 'standard'}
+              onCardViewModeChange={(mode) => {
+                onChange({ ...settings, cardViewMode: mode })
+                onCardViewModeChange?.(mode)
+              }}
+            />
+
             {/* 天气显示开关 */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>

@@ -67,6 +67,10 @@
     "icon_tier_mini": "ミニ",
     "icon_tier_medium": "標準",
     "icon_tier_large": "大",
+    "presentation_desc": "アイコングリッドはアイコンと名前だけ、詳細カードは従来のカードです。",
+    "presentation_persist_hint": "レイアウトとサイズはこのブラウザに保存します。詳細カードの密度はサイト設定へすぐ書き込まれます。",
+    "presentation_minimal_hint": "ミニマルモード中はホームがアイコングリッドに固定されます。解除後はこの選択に戻ります。",
+    "presentation_where": "アイコングリッドか詳細カードかは、サイト設定の「ホーム表示」で変更します。",
     "modal": {
       "analyzing": "スマート分析中...",
       "url_placeholder": "リンクを貼り付けて自動取得...",

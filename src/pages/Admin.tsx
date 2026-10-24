@@ -1042,6 +1042,18 @@ function AdminContent() {
     }
   }
 
+  // 详细卡片密度沿用首页工具栏的立刻保存。布局和尺寸不走这里，它们记在本机。
+  const handleCardViewModeChange = async (mode: 'compact' | 'standard' | 'comfortable') => {
+    setSiteSettings((prev) => ({ ...prev, cardViewMode: mode }))
+    try {
+      const fresh = await fetchSettings()
+      const updated = await updateSettings({ ...fresh, cardViewMode: mode })
+      onSettingsChange(updated)
+    } catch {
+      // 草稿里已经记下密度，之后点保存会连同其他站点设置再写一次。
+    }
+  }
+
   // 保存站点设置
   const handleSaveSettings = async () => {
     setSettingsError('')
@@ -2979,6 +2991,7 @@ function AdminContent() {
                   siteSettings={siteSettings}
                   onSiteSettingsChange={setSiteSettings}
                   onSaveSiteSettings={handleSaveSettings}
+                  onCardViewModeChange={handleCardViewModeChange}
                   isSavingSiteSettings={isSavingSettings}
                   siteSettingsSuccess={settingsSuccess}
                   siteSettingsError={settingsError}

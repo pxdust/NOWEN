@@ -53,8 +53,12 @@ describe('BookmarkIconButton', () => {
     const description = screen.getByTestId('bookmark-description')
     expect(description).toHaveTextContent('代码托管')
     expect(description.className).toContain('hidden')
-    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('rounded-none')
-    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('h-14')
+    const frame = screen.getByTestId('bookmark-icon-frame')
+    expect(frame).toHaveAttribute('data-icon-surface', 'plain')
+    expect(frame.style.background).toBe('')
+    expect(frame.style.border).toBe('')
+    expect(frame.className).toContain('h-14')
+    expect(frame.querySelector('.bookmark-icon-glyph')).toBeTruthy()
   })
 
   it('scales the shared tile for mini and large, and prefers a custom icon url', () => {
@@ -70,8 +74,10 @@ describe('BookmarkIconButton', () => {
     const frame = screen.getByTestId('bookmark-icon-frame')
     expect(screen.getByTestId('bookmark-icon')).toHaveAttribute('data-tier', 'mini')
     expect(frame.className).toContain('h-10')
-    expect(frame.className).toContain('rounded-none')
+    expect(frame).toHaveAttribute('data-icon-surface', 'plain')
+    expect(frame.style.background).toBe('')
     expect(frame.querySelector('img')).toHaveAttribute('src', 'https://cdn.example/icon.png')
+    expect(frame.querySelector('.bookmark-icon-glyph')).toBeTruthy()
 
     rerender(
       <BookmarkIconButton
@@ -84,6 +90,19 @@ describe('BookmarkIconButton', () => {
     expect(screen.getByTestId('bookmark-icon-frame').className).toContain('h-[4.75rem]')
     expect(screen.getByTestId('bookmark-icon')).toHaveTextContent('GitHub')
     expect(screen.getByTestId('bookmark-icon')).not.toHaveTextContent('代码托管')
+
+    rerender(
+      <BookmarkIconButton
+        bookmark={bookmark}
+        isInternal={false}
+        onWallpaper
+        onContextMenu={() => undefined}
+      />,
+    )
+    const wallpaperFrame = screen.getByTestId('bookmark-icon-frame')
+    expect(wallpaperFrame.style.background).toBe('')
+    expect(wallpaperFrame.style.border).toBe('')
+    expect(wallpaperFrame.querySelector('.bookmark-icon-glyph')).toBeTruthy()
   })
 
   it('opens on middle click', () => {

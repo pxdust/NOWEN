@@ -69,6 +69,10 @@
     "icon_tier_mini": "Mini",
     "icon_tier_medium": "Medium",
     "icon_tier_large": "Large",
+    "presentation_desc": "Icon grid shows only the icon and name. Detail cards keep the original cards.",
+    "presentation_persist_hint": "Layout and size stay on this browser. Compact, standard, and comfortable card density is saved to site settings immediately.",
+    "presentation_minimal_hint": "While minimal mode is on, the home page stays on the icon grid. This choice applies again after you leave it.",
+    "presentation_where": "Choose icon grid or detail cards under Site settings → Home display.",
     "modal": {
       "analyzing": "Analyzing...",
       "url_placeholder": "Paste link to auto-fetch info...",

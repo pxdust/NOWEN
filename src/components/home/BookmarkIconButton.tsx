@@ -17,7 +17,7 @@ interface BookmarkIconButtonProps {
   tier?: BookmarkIconTier
 }
 
-/** 三档共用一套直角磁贴，避免极简模式和普通图标网格各画一套。 */
+/** 三档共用同一颗图标，不再铺磁贴底。极简模式和普通图标网格都走这里。 */
 export const BOOKMARK_ICON_TIER_CLASS: Record<BookmarkIconTier, {
   frame: string
   glyph: string
@@ -108,17 +108,17 @@ export function BookmarkIconButton({
       >
         <span
           data-testid="bookmark-icon-frame"
+          data-icon-surface="plain"
           className={cn(
-            'relative flex items-center justify-center rounded-none transition-transform duration-200 group-hover:scale-105',
+            'relative flex items-center justify-center bg-transparent',
             metric.frame,
           )}
-          style={{
-            background: onWallpaper ? 'rgba(255,255,255,0.16)' : 'var(--color-glass)',
-            border: onWallpaper ? '1px solid rgba(255,255,255,0.28)' : '1px solid var(--color-glass-border)',
-            boxShadow: onWallpaper ? '0 8px 24px rgba(0,0,0,0.28)' : undefined,
-          }}
         >
-          <SiteIcon bookmark={bookmark} glyphClass={metric.glyph} fallbackClass={metric.fallback} />
+          <span className="bookmark-icon-stage">
+            <span className="bookmark-icon-glyph inline-flex leading-none">
+              <SiteIcon bookmark={bookmark} glyphClass={metric.glyph} fallbackClass={metric.fallback} />
+            </span>
+          </span>
           {bookmark.visibility === 'private' && (
             <span
               className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full"

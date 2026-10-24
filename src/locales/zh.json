@@ -69,6 +69,10 @@
     "icon_tier_mini": "迷你",
     "icon_tier_medium": "适中",
     "icon_tier_large": "大",
+    "presentation_desc": "图标网格只显示图标和名称，详细卡片保留原来的卡片。",
+    "presentation_persist_hint": "布局和尺寸只记在这台浏览器。详细卡片的紧凑、标准和宽松会立刻写入站点设置。",
+    "presentation_minimal_hint": "极简模式开启时，首页会暂时固定为图标网格。退出后仍使用这里的选择。",
+    "presentation_where": "书签用图标网格还是详细卡片，在站点配置的「首页显示」里调整。",
     "modal": {
       "analyzing": "智能分析中...",
       "url_placeholder": "粘贴链接，自动获取信息...",
