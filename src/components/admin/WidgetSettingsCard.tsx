@@ -15,10 +15,12 @@ import {
   Sparkles,
   Users,
   Shield,
-  Wallet
+  Wallet,
+  Minimize2
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { WidgetVisibility } from '../../lib/api'
+import { useMinimalMode } from '../../hooks/useMinimalMode'
 
 // 仅包含布尔开关的组件 ID 类型
 type WidgetToggleId = 'systemMonitor' | 'hardwareIdentity' | 'vitalSigns' | 'networkTelemetry' | 'processMatrix' | 'dockMiniMonitor' | 'mobileTicker' | 'aiAssistant' | 'packageUsage'
@@ -138,6 +140,7 @@ export function WidgetSettingsCard({
   error,
 }: WidgetSettingsCardProps) {
   const { t } = useTranslation()
+  const { enabled: minimalMode, setEnabled: setMinimalMode } = useMinimalMode()
   
   const toggleWidget = (id: WidgetToggleId) => {
     onChange({
@@ -208,6 +211,48 @@ export function WidgetSettingsCard({
             <span>{totalCount}</span>
             <span className="ml-1">{t('admin.settings.widget.enabled_count')}</span>
           </div>
+        </div>
+
+        <div
+          className="relative mb-6 flex items-center gap-4 rounded-xl p-4"
+          style={{
+            background: 'var(--color-bg-tertiary)',
+            border: '1px solid var(--color-glass-border)',
+          }}
+        >
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-500 to-zinc-700">
+            <Minimize2 className="h-5 w-5 text-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              {t('minimalMode.toggle')}
+            </div>
+            <div className="mt-0.5 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {t('minimalMode.desc')}
+            </div>
+            <div className="mt-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+              {t('minimalMode.localHint')}
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={minimalMode}
+            aria-label={t('minimalMode.toggle')}
+            onClick={() => setMinimalMode(!minimalMode)}
+            className={cn(
+              'relative h-6 w-12 flex-shrink-0 rounded-full transition-colors duration-300',
+              minimalMode ? 'bg-gradient-to-r from-sky-500 to-violet-500' : 'bg-gray-600/50',
+            )}
+          >
+            <span
+              className="absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-[left] duration-300"
+              style={{ left: minimalMode ? '1.75rem' : '0.25rem' }}
+            />
+          </button>
+          <span className="w-12 flex-shrink-0 text-right text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            {minimalMode ? t('minimalMode.on') : t('minimalMode.off')}
+          </span>
         </div>
 
         {/* Dashboard Widgets Section */}

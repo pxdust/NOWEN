@@ -86,6 +86,9 @@ import { useBookmarkStore } from "./hooks/useBookmarkStore";
 import { useThemeContext } from "./hooks/useTheme";
 import { useWeather } from "./hooks/useWeather";
 import { useSiteSettings } from "./hooks/useSiteSettings";
+import { useMinimalMode } from "./hooks/useMinimalMode";
+import { applyMinimalWidgetVisibility, isEditableShortcutTarget, isMinimalModeShortcut } from "./lib/minimalMode";
+import { BookmarkIconButton } from "./components/home/BookmarkIconButton";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useAuth } from "./hooks/useAuth";
 import { useNetworkEnv, getBookmarkUrl } from "./hooks/useNetworkEnv";
@@ -103,7 +106,7 @@ import {
   normalizeTag,
   writeTagToLocation,
 } from "./lib/bookmark-filter";
-import { VIEW_MODE_GRID_CLASS, loadMoreStep } from "./lib/bookmark-grid";
+import { ICON_GRID_CLASS, VIEW_MODE_GRID_CLASS, loadMoreStep } from "./lib/bookmark-grid";
 
 const UNCATEGORIZED_ID = "__uncategorized__";
 
@@ -318,6 +321,12 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
     }
   }, [widgetVisibility, isLoggedIn])
 
+  const { enabled: minimalMode, toggle: toggleMinimalMode } = useMinimalMode();
+  const shownWidgetVisibility = useMemo(
+    () => (minimalMode ? applyMinimalWidgetVisibility(effectiveWidgetVisibility) : effectiveWidgetVisibility),
+    [minimalMode, effectiveWidgetVisibility],
+  );
+
   const dockItems = createDockItems(isDark, toggleDarkMode, t, toggleLanguage, handleCardViewModeChange, cardViewMode);
   const effectiveMenuVisibility = useMemo(
     () => ({ ...menuVisibility, searchToggle: showSearch && menuVisibility.searchToggle !== false }),
@@ -342,11 +351,15 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           setIsAiAssistantOpen(prev => !prev);
         }
       }
+      if (isMinimalModeShortcut(e) && !isEditableShortcutTarget(e.target)) {
+        e.preventDefault();
+        toggleMinimalMode();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isLoggedIn, showSearch, effectiveWidgetVisibility.aiAssistant]);
+  }, [isLoggedIn, showSearch, effectiveWidgetVisibility.aiAssistant, toggleMinimalMode]);
 
   // ========== Bookmarklet / 外部 URL 唤起：?action=add&url=&title= ==========
   // 用户从任意网页点击 NOWEN Bookmarklet，会带参数跳转到本站，自动打开添加书签弹窗
@@ -830,7 +843,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       )}
 
       {/* Main Content */}
-      <div className="min-h-screen px-4 pb-20 sm:px-6 lg:px-8">
+      <div className="min-h-screen px-4 pb-20 sm:px-6 lg:px-8" data-minimal-mode={minimalMode ? 'on' : 'off'}>
         <div className="mx-auto min-w-0 max-w-[1440px]">
           {/* Hero Section */}
           <HeroSection
@@ -845,7 +858,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             onRefreshWeather={refreshWeather}
             onCityChange={handleWeatherCityChange}
             onOpenSearch={() => setIsSpotlightOpen(true)}
-            statusExtra={effectiveWidgetVisibility.dockMiniMonitor !== false ? (
+            minimalMode={minimalMode}
+            onToggleMinimal={toggleMinimalMode}
+            statusExtra={shownWidgetVisibility.dockMiniMonitor !== false ? (
               <div className="hidden md:block">
                 <Suspense fallback={null}>
                   <SystemMonitor initialMode="mini" size="sm" showLoading={false} storageKey="nowen-statusbar-monitor" />
@@ -903,12 +918,14 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           )}
 
           {/* Read Later Section */}
-          <ReadLaterSection
-            bookmarks={visibleBookmarks}
-            isLiteMode={isLiteMode ?? false}
-            onMarkRead={toggleRead}
-            onRemove={toggleReadLater}
-          />
+          {!minimalMode && (
+            <ReadLaterSection
+              bookmarks={visibleBookmarks}
+              isLiteMode={isLiteMode ?? false}
+              onMarkRead={toggleRead}
+              onRemove={toggleReadLater}
+            />
+          )}
 
           {/* Quick Notes / 灵感速记 — 从首页移除，现以抽屉形式由 dock 触发 */}
 
@@ -930,7 +947,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                   </span>
                 </div>
                 <SortableContext items={pinnedBookmarks.map((bookmark) => bookmark.id)} strategy={rectSortingStrategy}>
-                  <div className={`${VIEW_MODE_GRID_CLASS[cardViewMode]} relative z-10`}>
+                  <div className={`${minimalMode ? ICON_GRID_CLASS : VIEW_MODE_GRID_CLASS[cardViewMode]} relative z-10`}>
                     {pinnedBookmarks.map((bookmark, index) => (
                       <MemoizedBookmarkItem
                         key={bookmark.id}
@@ -947,6 +964,8 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                         isInternal={isInternal}
                         lightweight={visibleBookmarks.length > 50}
                         cardViewMode={cardViewMode}
+                        iconMode={minimalMode}
+                        onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                         onContextMenu={handleContextMenu}
                         onTagSelect={handleTagSelect}
                       />
@@ -956,13 +975,15 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
               </motion.section>
             )}
 
-            {effectiveWidgetVisibility.packageUsage && <PackageUsageSection />}
+            {!minimalMode && effectiveWidgetVisibility.packageUsage && <PackageUsageSection />}
 
-            <SystemWidgetsSection
-              visibility={effectiveWidgetVisibility}
-              widgetSizeMode={widgetSizeMode}
-              onWidgetSizeModeChange={handleWidgetSizeModeChange}
-            />
+            {!minimalMode && (
+              <SystemWidgetsSection
+                visibility={effectiveWidgetVisibility}
+                widgetSizeMode={widgetSizeMode}
+                onWidgetSizeModeChange={handleWidgetSizeModeChange}
+              />
+            )}
 
             {categories.map((category, catIndex) => {
               const categoryBookmarks = bookmarksByCategory[category.id] || [];
@@ -980,6 +1001,8 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                   collapseThreshold={categoryCollapseThreshold}
                   initialShowCount={categoryInitialShowCount}
                   cardViewMode={cardViewMode}
+                  iconMode={minimalMode}
+                  onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                   onContextMenu={handleContextMenu}
                   onEditCategory={(cat) => {
                     setEditingCategory(cat);
@@ -1005,6 +1028,8 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                 collapseThreshold={categoryCollapseThreshold}
                 initialShowCount={categoryInitialShowCount}
                 cardViewMode={cardViewMode}
+                iconMode={minimalMode}
+                onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                 onContextMenu={handleContextMenu}
                 onEditCategory={() => {}}
                 onViewModeChange={handleCardViewModeChange}
@@ -1205,7 +1230,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             })),
           }))}
         leftSlot={
-          effectiveWidgetVisibility.mobileTicker !== false
+          shownWidgetVisibility.mobileTicker !== false
             ? <Suspense fallback={null}><SystemMonitor initialMode="inline" compact showLoading={false} /></Suspense>
             : undefined
         }
@@ -1254,6 +1279,8 @@ const MemoizedBookmarkItem = React.memo(function MemoizedBookmarkItem({
   isInternal,
   lightweight,
   cardViewMode = 'standard',
+  iconMode = false,
+  onWallpaper = false,
   onContextMenu,
   onTagSelect,
 }: {
@@ -1264,11 +1291,26 @@ const MemoizedBookmarkItem = React.memo(function MemoizedBookmarkItem({
   isInternal: boolean;
   lightweight: boolean;
   cardViewMode?: 'compact' | 'standard' | 'comfortable';
+  iconMode?: boolean;
+  onWallpaper?: boolean;
   onContextMenu: (e: React.MouseEvent, bookmark: Bookmark) => void;
   onTagSelect: (tag: string) => void;
 }) {
   const animDelay = index < MAX_ANIMATED_INDEX ? index * 0.04 : 0;
   const isCompact = cardViewMode === 'compact';
+
+  if (iconMode) {
+    return (
+      <SortableCard id={bookmark.id}>
+        <BookmarkIconButton
+          bookmark={bookmark}
+          isInternal={isInternal}
+          onWallpaper={onWallpaper}
+          onContextMenu={onContextMenu}
+        />
+      </SortableCard>
+    );
+  }
 
   // 轻量模式：跳过 framer-motion 入场动画
   const card = (
@@ -1500,6 +1542,8 @@ function CategorySection({
   collapseThreshold,
   initialShowCount,
   cardViewMode = 'standard',
+  iconMode = false,
+  onWallpaper = false,
   onContextMenu,
   onEditCategory,
   onViewModeChange,
@@ -1515,6 +1559,8 @@ function CategorySection({
   collapseThreshold: number;
   initialShowCount: number;
   cardViewMode?: 'compact' | 'standard' | 'comfortable';
+  iconMode?: boolean;
+  onWallpaper?: boolean;
   onContextMenu: (e: React.MouseEvent, bookmark: Bookmark) => void;
   onEditCategory: (cat: import("./types/bookmark").Category) => void;
   onViewModeChange?: (mode: 'compact' | 'standard' | 'comfortable') => void;
@@ -1560,8 +1606,8 @@ function CategorySection({
       transition={{ duration: isLiteMode ? 0.2 : 0.28, delay: Math.min(catIndex * 0.04, 0.16) }}
       data-category-id={category.id}
     >
-      {/* 背景装饰文字 */}
-      {!isLiteMode && (
+      {/* 背景装饰文字。图标模式不再铺大字，避免挡住图标。 */}
+      {!isLiteMode && !iconMode && (
         <div
           className="absolute -top-8 left-0 text-[120px] font-bold pointer-events-none select-none leading-none"
           style={{ fontFamily: "Inter, sans-serif", color: "var(--color-text-muted)", opacity: 0.03 }}
@@ -1597,7 +1643,7 @@ function CategorySection({
       </div>
 
       <SortableContext items={visibleBookmarks.map(b => b.id)} strategy={rectSortingStrategy}>
-        <div className={`${VIEW_MODE_CONFIG[cardViewMode].gridClass} relative z-10`}>
+        <div className={`${iconMode ? ICON_GRID_CLASS : VIEW_MODE_CONFIG[cardViewMode].gridClass} relative z-10`} data-icon-grid={iconMode ? 'true' : undefined}>
           {doRender ? visibleBookmarks.map((bookmark, index) => (
             <MemoizedBookmarkItem
               key={bookmark.id}
@@ -1608,6 +1654,8 @@ function CategorySection({
               isInternal={isInternal}
               lightweight={lightweight}
               cardViewMode={cardViewMode}
+              iconMode={iconMode}
+              onWallpaper={onWallpaper}
               onContextMenu={onContextMenu}
               onTagSelect={onTagSelect}
             />

@@ -1,6 +1,9 @@
 export type CardViewMode = 'compact' | 'standard' | 'comfortable'
 
 /** 与首页书签网格断点一致。宽度用视口，Tailwind 断点也按视口计算。 */
+/** 极简模式：一格一个网站图标，不沿用方形卡片的列宽。 */
+export const ICON_GRID_CLASS = 'grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-x-2 gap-y-4'
+
 export const VIEW_MODE_GRID_CLASS: Record<CardViewMode, string> = {
   compact: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3',
   standard: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4',

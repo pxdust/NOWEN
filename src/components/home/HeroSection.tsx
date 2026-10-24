@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Typewriter } from '../ui/typewriter';
 import { Sparkles } from '../ui/effects';
 import { getRandomWisdom, isQuotesVisible } from '../../data/quotes';
@@ -22,6 +23,9 @@ interface HeroSectionProps {
   onOpenSearch: () => void;
   statusExtra?: ReactNode;
   tabletNav?: ReactNode;
+  /** 点击时间切换极简模式。不传时时间只是展示。 */
+  minimalMode?: boolean;
+  onToggleMinimal?: () => void;
 }
 
 const wallpaperTextShadow = {
@@ -42,6 +46,8 @@ function HeroStack({
   showQuote,
   animateQuote,
   staticQuote,
+  minimalMode,
+  onToggleMinimal,
 }: {
   showWeather?: boolean;
   showLunar?: boolean;
@@ -54,24 +60,45 @@ function HeroStack({
   showQuote: boolean;
   animateQuote: boolean;
   staticQuote: string;
+  minimalMode?: boolean;
+  onToggleMinimal?: () => void;
 }) {
+  const { t } = useTranslation();
   const { formattedTime, formattedDate, lunarDate } = useTime(!!showLunar);
   const primaryColor = hasWallpaper ? 'rgba(255, 255, 255, 0.95)' : 'var(--color-text-primary)';
   const secondaryColor = hasWallpaper ? 'rgba(255, 255, 255, 0.9)' : 'var(--color-text-secondary)';
   const mutedColor = hasWallpaper ? 'rgba(255, 255, 255, 0.7)' : 'var(--color-text-muted)';
+  const timeClassName = 'font-mono text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl';
+  const timeStyle = { color: primaryColor, ...(hasWallpaper ? wallpaperTextShadow.primary : {}) };
+  const minimalHint = minimalMode ? t('minimalMode.exitHint') : t('minimalMode.enterHint');
 
   return (
     <div
       data-testid="hero-stack"
       className="flex w-full max-w-3xl flex-col items-center justify-center gap-2 text-center sm:gap-3"
     >
-      <div
-        data-testid="hero-time"
-        className="font-mono text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl"
-        style={{ color: primaryColor, ...(hasWallpaper ? wallpaperTextShadow.primary : {}) }}
-      >
-        {formattedTime}
-      </div>
+      {onToggleMinimal ? (
+        <button
+          type="button"
+          data-testid="hero-time"
+          onClick={onToggleMinimal}
+          title={minimalHint}
+          aria-pressed={!!minimalMode}
+          aria-label={minimalHint}
+          className={`${timeClassName} cursor-pointer rounded-md transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4`}
+          style={timeStyle}
+        >
+          {formattedTime}
+        </button>
+      ) : (
+        <div
+          data-testid="hero-time"
+          className={timeClassName}
+          style={timeStyle}
+        >
+          {formattedTime}
+        </div>
+      )}
 
       <div
         data-testid="hero-meta"
@@ -152,6 +179,8 @@ export function HeroSection({
   onOpenSearch,
   statusExtra,
   tabletNav,
+  minimalMode = false,
+  onToggleMinimal,
 }: HeroSectionProps) {
   const reducedMotion = usePrefersReducedMotion();
   const showQuote = isQuotesVisible();
@@ -187,6 +216,8 @@ export function HeroSection({
         showQuote={showQuote}
         animateQuote={animateQuote}
         staticQuote={staticQuote}
+        minimalMode={minimalMode}
+        onToggleMinimal={onToggleMinimal}
       />
     </section>
   );
