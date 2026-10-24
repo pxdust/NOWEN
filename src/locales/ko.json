@@ -202,6 +202,15 @@
     "greeting": "안녕하세요",
     "subtitle": "탐색을 시작합시다"
   },
+  "minimalMode": {
+    "toggle": "미니멀 모드",
+    "enterHint": "시간을 눌러 사이트 아이콘 보기 (Alt+M)",
+    "exitHint": "시간을 눌러 카드로 돌아가기 (Alt+M)",
+    "desc": "사이트 아이콘을 보여주고 시스템 모니터, 요금제, 서비스 하이브를 숨깁니다.",
+    "localHint": "이 브라우저에만 저장되며 위의 위젯 스위치는 바꾸지 않습니다.",
+    "on": "켜짐",
+    "off": "꺼짐"
+  },
   "readLater": {
     "title": "나중에 읽기",
     "allRead": "모두 읽음",

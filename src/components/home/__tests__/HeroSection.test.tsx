@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import type { ComponentProps } from 'react'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../lib/i18n'
 import { setActiveQuotes } from '../../../data/quotes'
@@ -115,6 +115,23 @@ describe('HeroSection centered stack', () => {
     renderHero({ isLiteMode: true })
 
     expect(screen.queryByTestId('hero-quote')).toBeNull()
+  })
+
+  it('toggles icon mode from the clock without resizing the full-dashboard time', () => {
+    const onToggleMinimal = vi.fn()
+    renderHero({ onToggleMinimal, minimalMode: false })
+
+    const time = screen.getByTestId('hero-time')
+    expect(time.tagName).toBe('BUTTON')
+    expect(time.className).toContain('text-4xl')
+    expect(time.className).toContain('sm:text-5xl')
+    expect(time.className).toContain('cursor-pointer')
+    expect(time).toHaveAttribute('title', expect.stringContaining('Alt+M'))
+    expect(screen.getByTestId('hero-section').className).toContain('min-h-[25vh]')
+    expect(screen.getByTestId('hero-edge')).toBeTruthy()
+
+    fireEvent.click(time)
+    expect(onToggleMinimal).toHaveBeenCalledTimes(1)
   })
 
   it('respects weather and lunar toggles', () => {

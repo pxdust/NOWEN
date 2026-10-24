@@ -204,6 +204,15 @@
     "greeting": "Hello",
     "subtitle": "Let's start exploring"
   },
+  "minimalMode": {
+    "toggle": "Minimal mode",
+    "enterHint": "Click the clock for site icons (Alt+M)",
+    "exitHint": "Click the clock to restore cards (Alt+M)",
+    "desc": "Show site icons and hide the system monitor, package usage, and service hive.",
+    "localHint": "Stored only in this browser. It does not change the widget switches above.",
+    "on": "On",
+    "off": "Off"
+  },
   "readLater": {
     "title": "Read Later",
     "allRead": "All Read",

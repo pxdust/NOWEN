@@ -204,6 +204,15 @@
     "greeting": "你好",
     "subtitle": "让我们开始探索吧"
   },
+  "minimalMode": {
+    "toggle": "极简模式",
+    "enterHint": "点击时间进入极简模式（Alt+M）",
+    "exitHint": "点击时间退出极简模式（Alt+M）",
+    "desc": "首页改成站点图标，收起系统监控、套餐额度和服务蜂巢。",
+    "localHint": "只记在这台浏览器，不会改动上面的组件开关。",
+    "on": "已开启",
+    "off": "已关闭"
+  },
   "readLater": {
     "title": "稍后阅读",
     "allRead": "全部已读",
