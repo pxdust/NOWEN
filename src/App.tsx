@@ -845,10 +845,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       )}
 
       {/* Main Content */}
-      <div
-        className={minimalMode ? 'min-h-[100dvh] px-4 sm:px-6' : 'min-h-screen px-4 pb-20 sm:px-6 lg:px-8'}
-        data-minimal-mode={minimalMode ? 'on' : 'off'}
-      >
+      <div className="min-h-screen px-4 pb-20 sm:px-6 lg:px-8" data-minimal-mode={minimalMode ? 'on' : 'off'}>
         <div className="mx-auto min-w-0 max-w-[1440px]">
           {/* Hero Section */}
           <HeroSection

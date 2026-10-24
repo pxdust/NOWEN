@@ -132,36 +132,14 @@ describe('HeroSection centered stack', () => {
     expect(onToggleMinimal).toHaveBeenCalledTimes(1)
   })
 
-  it('stages an iTab-like clock and centered search when minimal mode is on', () => {
-    const onOpenSearch = vi.fn()
-    renderHero({ minimalMode: true, onToggleMinimal: () => undefined, onOpenSearch })
+  it('centers the clock when minimal mode is on', () => {
+    renderHero({ minimalMode: true, onToggleMinimal: () => undefined })
 
     const section = screen.getByTestId('hero-section')
-    const stack = screen.getByTestId('hero-stack')
-    const time = screen.getByTestId('hero-time')
-    const meta = screen.getByTestId('hero-meta')
-    const search = screen.getByTestId('hero-search')
-    const quote = screen.getByTestId('hero-quote')
-
-    expect(section.className).toContain('min-h-[100dvh]')
+    expect(section.className).toContain('min-h-[calc(100vh-8rem)]')
     expect(section.className).not.toContain('min-h-[25vh]')
-    expect(screen.queryByTestId('hero-edge')).toBeNull()
-
-    expect(time.className).toContain('text-6xl')
-    expect(time.className).toContain('lg:text-8xl')
-    expect(time).toHaveAttribute('aria-pressed', 'true')
-    expect(stack.contains(search)).toBe(true)
-    expect(search.className).toContain('rounded-full')
-    expect(quote.className).toContain('text-sm')
-    expect(quote.className).toContain('max-w-xl')
-    expect(quote.className).not.toContain('text-lg')
-
-    expect(time.compareDocumentPosition(meta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(meta.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(search.compareDocumentPosition(quote) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-
-    fireEvent.click(search)
-    expect(onOpenSearch).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('hero-time')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '搜索或输入命令...' })).toBeTruthy()
   })
 
   it('respects weather and lunar toggles', () => {

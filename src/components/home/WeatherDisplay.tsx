@@ -11,13 +11,9 @@ interface WeatherDisplayProps {
   weatherCity?: string;
   onCityChange?: (city: string) => void;
   compact?: boolean;
-  /** 极简模式：去掉玻璃底，融进日期那一行 */
-  plain?: boolean;
-  /** 壁纸上改用浅色字，保证能读 */
-  onMedia?: boolean;
 }
 
-export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCityChange, compact = false, plain = false, onMedia = false }: WeatherDisplayProps) {
+export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCityChange, compact = false }: WeatherDisplayProps) {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -77,18 +73,12 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
     <div className="relative inline-block" ref={panelRef}>
       <motion.div
         className={compact
-          ? `inline-flex items-center gap-1.5 cursor-pointer select-none ${plain ? 'px-0 py-0' : 'px-2 py-1 rounded-none'}`
+          ? 'inline-flex items-center gap-1.5 px-2 py-1 rounded-none cursor-pointer select-none'
           : 'mt-4 inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-none cursor-pointer select-none'}
-        style={plain
-          ? {
-              background: 'transparent',
-              color: onMedia ? 'rgba(255, 255, 255, 0.88)' : 'var(--color-text-secondary)',
-              textShadow: onMedia ? '0 1px 8px rgba(0,0,0,0.55)' : undefined,
-            }
-          : {
-              background: 'var(--color-glass)',
-              border: '1px solid var(--color-glass-border)',
-            }}
+        style={{
+          background: 'var(--color-glass)',
+          border: '1px solid var(--color-glass-border)',
+        }}
         initial={compact ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: compact ? 0 : 0.3 }}
@@ -96,7 +86,7 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
       >
         <div className="flex items-center gap-1.5">
           <span className={compact ? 'text-base leading-none' : 'text-xl sm:text-2xl'}>{getWeatherIcon(weather.icon)}</span>
-          <span className={compact ? 'text-sm font-medium' : 'text-lg sm:text-xl font-medium'} style={{ color: plain ? 'inherit' : 'var(--color-text-primary)' }}>
+          <span className={compact ? 'text-sm font-medium' : 'text-lg sm:text-xl font-medium'} style={{ color: 'var(--color-text-primary)' }}>
             {weather.temperature}°
           </span>
         </div>
@@ -177,7 +167,7 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
               key="display"
               onClick={(e) => { e.stopPropagation(); handleCityClick(); }}
               className="inline-flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
-              style={{ color: plain ? 'inherit' : 'var(--color-text-muted)' }}
+              style={{ color: 'var(--color-text-muted)' }}
               title={onCityChange ? t('weather.click_to_change_city') : undefined}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -190,7 +180,7 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
         </AnimatePresence>
 
         {/* 展开箭头 */}
-        {!plain && weather.forecast.length > 0 && (
+        {weather.forecast.length > 0 && (
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}
@@ -200,19 +190,18 @@ export function WeatherDisplay({ weather, loading, onRefresh, weatherCity, onCit
           </motion.div>
         )}
 
-        {!plain && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRefresh();
-            }}
-            className="p-1 rounded-md hover:bg-white/10 transition-colors"
-            style={{ color: 'var(--color-text-muted)' }}
-            title={t('weather.refresh')}
-          >
-            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        )}
+        {/* 刷新按钮 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRefresh();
+          }}
+          className="p-1 rounded-md hover:bg-white/10 transition-colors"
+          style={{ color: 'var(--color-text-muted)' }}
+          title={t('weather.refresh')}
+        >
+          <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </motion.div>
 
       {/* 7 天预报面板 */}
