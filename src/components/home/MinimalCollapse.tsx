@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion'
 
-const EXIT_MS = 300
+const EXIT_MS = 500
 
 interface MinimalCollapseProps {
   hidden: boolean
@@ -44,7 +44,7 @@ export function MinimalCollapse({ hidden, children }: MinimalCollapseProps) {
       className={
         reduced
           ? visible ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[0fr]'
-          : `grid transition-[grid-template-rows,opacity] duration-300 ease-out ${visible ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`
+          : `grid transition-[grid-template-rows,opacity] duration-500 ease-out ${visible ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`
       }
       style={{ pointerEvents: visible ? undefined : 'none' }}
     >
