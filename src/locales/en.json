@@ -63,6 +63,12 @@
     "view_compact": "Compact View",
     "view_standard": "Standard View",
     "view_comfortable": "Comfortable View",
+    "presentation": "Bookmark style",
+    "layout_icons": "Icon grid",
+    "layout_cards": "Detail cards",
+    "icon_tier_mini": "Mini",
+    "icon_tier_medium": "Medium",
+    "icon_tier_large": "Large",
     "modal": {
       "analyzing": "Analyzing...",
       "url_placeholder": "Paste link to auto-fetch info...",

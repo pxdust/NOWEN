@@ -4,10 +4,16 @@ import { ExternalLink } from 'lucide-react';
 import { SpotlightCard } from '../ui/spotlight-card';
 import { Bookmark } from '../../types/bookmark';
 import { IconRenderer } from '../IconRenderer';
+import { BookmarkIconButton } from './BookmarkIconButton';
+import type { BookmarkIconTier } from '../../lib/bookmarkPresentation';
 
 interface BookmarkDragOverlayProps {
   activeBookmark: Bookmark | null | undefined;
   cardViewMode?: 'compact' | 'standard' | 'comfortable';
+  iconMode?: boolean;
+  tier?: BookmarkIconTier;
+  isInternal?: boolean;
+  onWallpaper?: boolean;
 }
 
 // 自然的放下动画
@@ -23,11 +29,34 @@ const dropAnimation: DropAnimation = {
   easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
 };
 
-export function BookmarkDragOverlay({ activeBookmark, cardViewMode = 'standard' }: BookmarkDragOverlayProps) {
+const ICON_OVERLAY_WIDTH: Record<BookmarkIconTier, string> = {
+  mini: 'w-[4.5rem]',
+  medium: 'w-[5.5rem]',
+  large: 'w-[7.25rem]',
+}
+
+export function BookmarkDragOverlay({
+  activeBookmark,
+  cardViewMode = 'standard',
+  iconMode = false,
+  tier = 'medium',
+  isInternal = false,
+  onWallpaper = false,
+}: BookmarkDragOverlayProps) {
   const isCompact = cardViewMode === 'compact';
   return (
     <DragOverlay dropAnimation={dropAnimation} zIndex={100}>
-      {activeBookmark ? (
+      {activeBookmark && iconMode ? (
+        <div className={ICON_OVERLAY_WIDTH[tier]} style={{ pointerEvents: 'none', transform: 'scale(1.04)' }}>
+          <BookmarkIconButton
+            bookmark={activeBookmark}
+            isInternal={isInternal}
+            onWallpaper={onWallpaper}
+            tier={tier}
+            onContextMenu={() => undefined}
+          />
+        </div>
+      ) : activeBookmark ? (
         <div
           style={{
             transform: 'scale(1.04)',

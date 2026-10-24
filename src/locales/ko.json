@@ -61,6 +61,12 @@
     "view_compact": "컴팩트 보기",
     "view_standard": "표준 보기",
     "view_comfortable": "여유 보기",
+    "presentation": "북마크 스타일",
+    "layout_icons": "아이콘 그리드",
+    "layout_cards": "상세 카드",
+    "icon_tier_mini": "미니",
+    "icon_tier_medium": "보통",
+    "icon_tier_large": "크게",
     "modal": {
       "analyzing": "스마트 분석 중...",
       "url_placeholder": "링크를 붙여넣으면 자동으로 정보를 가져옵니다...",

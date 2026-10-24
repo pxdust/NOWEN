@@ -49,5 +49,53 @@ describe('BookmarkIconButton', () => {
 
     fireEvent.click(button)
     expect(open).toHaveBeenCalledWith('https://github.com', '_blank', 'noopener,noreferrer')
+
+    const description = screen.getByTestId('bookmark-description')
+    expect(description).toHaveTextContent('代码托管')
+    expect(description.className).toContain('hidden')
+    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('rounded-none')
+    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('h-14')
+  })
+
+  it('scales the shared tile for mini and large, and prefers a custom icon url', () => {
+    const { rerender } = render(
+      <BookmarkIconButton
+        bookmark={{ ...bookmark, iconUrl: 'https://cdn.example/icon.png', favicon: 'https://cdn.example/favicon.ico' }}
+        isInternal={false}
+        tier="mini"
+        onContextMenu={() => undefined}
+      />,
+    )
+
+    const frame = screen.getByTestId('bookmark-icon-frame')
+    expect(screen.getByTestId('bookmark-icon')).toHaveAttribute('data-tier', 'mini')
+    expect(frame.className).toContain('h-10')
+    expect(frame.className).toContain('rounded-none')
+    expect(frame.querySelector('img')).toHaveAttribute('src', 'https://cdn.example/icon.png')
+
+    rerender(
+      <BookmarkIconButton
+        bookmark={bookmark}
+        isInternal={false}
+        tier="large"
+        onContextMenu={() => undefined}
+      />,
+    )
+    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('h-[4.75rem]')
+    expect(screen.getByTestId('bookmark-icon')).toHaveTextContent('GitHub')
+    expect(screen.getByTestId('bookmark-icon')).not.toHaveTextContent('代码托管')
+  })
+
+  it('opens on middle click', () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    render(
+      <BookmarkIconButton
+        bookmark={bookmark}
+        isInternal={false}
+        onContextMenu={() => undefined}
+      />,
+    )
+    fireEvent(screen.getByTestId('bookmark-icon'), new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }))
+    expect(open).toHaveBeenCalledWith('https://github.com', '_blank', 'noopener,noreferrer')
   })
 })

@@ -9,9 +9,6 @@ import {
   Edit2,
   ChevronDown,
   ChevronUp,
-  LayoutGrid,
-  Grid3X3,
-  StretchHorizontal,
   Lock,
   LayoutList,
 } from "lucide-react";
@@ -87,8 +84,11 @@ import { useThemeContext } from "./hooks/useTheme";
 import { useWeather } from "./hooks/useWeather";
 import { useSiteSettings } from "./hooks/useSiteSettings";
 import { useMinimalMode } from "./hooks/useMinimalMode";
+import { useBookmarkPresentation } from "./hooks/useBookmarkPresentation";
 import { applyMinimalWidgetVisibility, isEditableShortcutTarget, isMinimalModeShortcut } from "./lib/minimalMode";
+import type { BookmarkIconTier } from "./lib/bookmarkPresentation";
 import { BookmarkIconButton } from "./components/home/BookmarkIconButton";
+import { BookmarkGridToolbar, buildBookmarkPresentationMenuItems } from "./components/home/BookmarkGridToolbar";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useAuth } from "./hooks/useAuth";
 import { useNetworkEnv, getBookmarkUrl } from "./hooks/useNetworkEnv";
@@ -106,7 +106,7 @@ import {
   normalizeTag,
   writeTagToLocation,
 } from "./lib/bookmark-filter";
-import { ICON_GRID_CLASS, VIEW_MODE_GRID_CLASS, loadMoreStep } from "./lib/bookmark-grid";
+import { ICON_TIER_GRID_CLASS, VIEW_MODE_GRID_CLASS, loadMoreIconStep, loadMoreStep } from "./lib/bookmark-grid";
 
 const UNCATEGORIZED_ID = "__uncategorized__";
 
@@ -326,8 +326,33 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
     () => (minimalMode ? applyMinimalWidgetVisibility(effectiveWidgetVisibility) : effectiveWidgetVisibility),
     [minimalMode, effectiveWidgetVisibility],
   );
+  const {
+    tier: bookmarkIconTier,
+    layout: bookmarkLayout,
+    setTier: setBookmarkIconTier,
+    setLayout: setBookmarkLayout,
+  } = useBookmarkPresentation();
+  const bookmarkIconMode = minimalMode || bookmarkLayout === 'icons';
+  const chooseBookmarkTier = useCallback((next: BookmarkIconTier) => {
+    if (!minimalMode) setBookmarkLayout('icons');
+    setBookmarkIconTier(next);
+  }, [minimalMode, setBookmarkLayout, setBookmarkIconTier]);
 
-  const dockItems = createDockItems(isDark, toggleDarkMode, t, toggleLanguage, handleCardViewModeChange, cardViewMode);
+  const dockItems = createDockItems(
+    isDark,
+    toggleDarkMode,
+    t,
+    toggleLanguage,
+    handleCardViewModeChange,
+    cardViewMode,
+    {
+      layout: minimalMode ? 'icons' : bookmarkLayout,
+      tier: bookmarkIconTier,
+      hideLayoutToggle: minimalMode,
+      onLayoutChange: setBookmarkLayout,
+      onTierChange: chooseBookmarkTier,
+    },
+  );
   const effectiveMenuVisibility = useMemo(
     () => ({ ...menuVisibility, searchToggle: showSearch && menuVisibility.searchToggle !== false }),
     [menuVisibility, showSearch]
@@ -770,6 +795,22 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
       : wallpaper?.imageUrl
     : undefined;
 
+  const presentationAnchor = pinnedBookmarks.length > 0
+    ? 'pinned'
+    : (categories.find((category) => (bookmarksByCategory[category.id] || []).length > 0)?.id
+      ?? (uncategorizedBookmarks.length > 0 ? UNCATEGORIZED_ID : null));
+  const bookmarkToolbar = bookmarks.length > 0 ? (
+    <BookmarkGridToolbar
+      layout={bookmarkLayout}
+      tier={bookmarkIconTier}
+      allowCards={!minimalMode}
+      cardViewMode={cardViewMode}
+      onLayoutChange={setBookmarkLayout}
+      onTierChange={chooseBookmarkTier}
+      onCardViewModeChange={handleCardViewModeChange}
+    />
+  ) : null;
+
   // ========== 首页渲染 ==========
   const BackgroundWrapper = isLiteMode ? LiteBackground : AuroraBackground;
   const backgroundProps = isLiteMode
@@ -929,6 +970,10 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
 
           {/* Quick Notes / 灵感速记 — 从首页移除，现以抽屉形式由 dock 触发 */}
 
+          {bookmarkToolbar && !presentationAnchor && (
+            <div className="mb-4">{bookmarkToolbar}</div>
+          )}
+
           <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel} measuring={measuringConfig}>
             {pinnedBookmarks.length > 0 && (
               <motion.section
@@ -937,7 +982,7 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                 animate={{ opacity: 1 }}
                 data-section="pinned"
               >
-                <div className="mb-3 flex items-center gap-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
                   <Pin className="h-5 w-5 text-yellow-400" />
                   <h2 className="text-xl font-medium tracking-wide" style={{ color: "var(--color-text-primary)" }}>
                     {t('sidebar.pinned')}
@@ -945,9 +990,16 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                   <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
                     {pinnedBookmarks.length}
                   </span>
+                  {presentationAnchor === 'pinned' && bookmarkToolbar && (
+                    <div className="ml-auto">{bookmarkToolbar}</div>
+                  )}
                 </div>
                 <SortableContext items={pinnedBookmarks.map((bookmark) => bookmark.id)} strategy={rectSortingStrategy}>
-                  <div className={`${minimalMode ? ICON_GRID_CLASS : VIEW_MODE_GRID_CLASS[cardViewMode]} relative z-10`}>
+                  <div
+                    className={`${bookmarkIconMode ? ICON_TIER_GRID_CLASS[bookmarkIconTier] : VIEW_MODE_GRID_CLASS[cardViewMode]} relative z-10`}
+                    data-icon-grid={bookmarkIconMode ? 'true' : undefined}
+                    data-icon-tier={bookmarkIconMode ? bookmarkIconTier : undefined}
+                  >
                     {pinnedBookmarks.map((bookmark, index) => (
                       <MemoizedBookmarkItem
                         key={bookmark.id}
@@ -964,7 +1016,8 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                         isInternal={isInternal}
                         lightweight={visibleBookmarks.length > 50}
                         cardViewMode={cardViewMode}
-                        iconMode={minimalMode}
+                        iconMode={bookmarkIconMode}
+                        iconTier={bookmarkIconTier}
                         onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                         onContextMenu={handleContextMenu}
                         onTagSelect={handleTagSelect}
@@ -1001,7 +1054,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                   collapseThreshold={categoryCollapseThreshold}
                   initialShowCount={categoryInitialShowCount}
                   cardViewMode={cardViewMode}
-                  iconMode={minimalMode}
+                  iconMode={bookmarkIconMode}
+                  iconTier={bookmarkIconTier}
+                  presentation={presentationAnchor === category.id ? bookmarkToolbar : null}
                   onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                   onContextMenu={handleContextMenu}
                   onEditCategory={(cat) => {
@@ -1028,7 +1083,9 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
                 collapseThreshold={categoryCollapseThreshold}
                 initialShowCount={categoryInitialShowCount}
                 cardViewMode={cardViewMode}
-                iconMode={minimalMode}
+                iconMode={bookmarkIconMode}
+                iconTier={bookmarkIconTier}
+                presentation={presentationAnchor === UNCATEGORIZED_ID ? bookmarkToolbar : null}
                 onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
                 onContextMenu={handleContextMenu}
                 onEditCategory={() => {}}
@@ -1039,7 +1096,14 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
             )}
 
             {/* 拖拽覆盖层 */}
-            <BookmarkDragOverlay activeBookmark={activeBookmark} cardViewMode={cardViewMode} />
+            <BookmarkDragOverlay
+              activeBookmark={activeBookmark}
+              cardViewMode={cardViewMode}
+              iconMode={bookmarkIconMode}
+              tier={bookmarkIconTier}
+              isInternal={isInternal}
+              onWallpaper={wallpaperEnabled && !!wallpaperImageSrc}
+            />
           </DndContext>
 
           {/* Empty State */}
@@ -1158,23 +1222,34 @@ const { weather, loading: weatherLoading, refresh: refreshWeather } = useWeather
           isOpen={contextMenu.isOpen}
           position={contextMenu.position}
           onClose={closeContextMenu}
-          items={getMenuItems(contextMenu.bookmark, {
-            onEdit: () => {
-              setEditingBookmark(contextMenu.bookmark);
-              setIsAddModalOpen(true);
-            },
-            onDelete: () => handleDelete(contextMenu.bookmark!.id),
-            onTogglePin: () => togglePin(contextMenu.bookmark!.id),
-            onToggleReadLater: () => toggleReadLater(contextMenu.bookmark!.id),
-            ...(isLoggedIn ? {
-              onToggleVisibility: async () => {
-                const bk = contextMenu.bookmark!;
-                const newVisibility = bk.visibility === 'private' ? 'public' : 'private';
-                await updateBookmark(bk.id, { visibility: newVisibility });
-                refreshData();
+          items={[
+            ...getMenuItems(contextMenu.bookmark, {
+              onEdit: () => {
+                setEditingBookmark(contextMenu.bookmark);
+                setIsAddModalOpen(true);
               },
-            } : {}),
-          })}
+              onDelete: () => handleDelete(contextMenu.bookmark!.id),
+              onTogglePin: () => togglePin(contextMenu.bookmark!.id),
+              onToggleReadLater: () => toggleReadLater(contextMenu.bookmark!.id),
+              ...(isLoggedIn ? {
+                onToggleVisibility: async () => {
+                  const bk = contextMenu.bookmark!;
+                  const newVisibility = bk.visibility === 'private' ? 'public' : 'private';
+                  await updateBookmark(bk.id, { visibility: newVisibility });
+                  refreshData();
+                },
+              } : {}),
+            }),
+            ...buildBookmarkPresentationMenuItems({
+              t,
+              tier: bookmarkIconTier,
+              layout: minimalMode ? 'icons' : bookmarkLayout,
+              showIcons: bookmarkIconMode,
+              allowCards: !minimalMode,
+              onTier: chooseBookmarkTier,
+              onLayout: setBookmarkLayout,
+            }),
+          ]}
         />
       )}
 
@@ -1280,6 +1355,7 @@ const MemoizedBookmarkItem = React.memo(function MemoizedBookmarkItem({
   lightweight,
   cardViewMode = 'standard',
   iconMode = false,
+  iconTier = 'medium',
   onWallpaper = false,
   onContextMenu,
   onTagSelect,
@@ -1292,6 +1368,7 @@ const MemoizedBookmarkItem = React.memo(function MemoizedBookmarkItem({
   lightweight: boolean;
   cardViewMode?: 'compact' | 'standard' | 'comfortable';
   iconMode?: boolean;
+  iconTier?: BookmarkIconTier;
   onWallpaper?: boolean;
   onContextMenu: (e: React.MouseEvent, bookmark: Bookmark) => void;
   onTagSelect: (tag: string) => void;
@@ -1306,6 +1383,7 @@ const MemoizedBookmarkItem = React.memo(function MemoizedBookmarkItem({
           bookmark={bookmark}
           isInternal={isInternal}
           onWallpaper={onWallpaper}
+          tier={iconTier}
           onContextMenu={onContextMenu}
         />
       </SortableCard>
@@ -1464,10 +1542,35 @@ function useViewportWidth() {
 }
 
 // ========== 分类骨架屏占位 ==========
-function CategorySkeleton({ count, color, cardViewMode = 'standard' }: { count: number; color: string; cardViewMode?: 'compact' | 'standard' | 'comfortable' }) {
+function CategorySkeleton({
+  count,
+  color,
+  cardViewMode = 'standard',
+  iconMode = false,
+  iconTier = 'medium',
+}: {
+  count: number;
+  color: string;
+  cardViewMode?: 'compact' | 'standard' | 'comfortable';
+  iconMode?: boolean;
+  iconTier?: BookmarkIconTier;
+}) {
   const displayCount = Math.min(count, 8);
   const config = VIEW_MODE_CONFIG[cardViewMode];
   const isCompact = cardViewMode === 'compact';
+  if (iconMode) {
+    const frame = iconTier === 'mini' ? 'h-10 w-10' : iconTier === 'large' ? 'h-[4.75rem] w-[4.75rem]' : 'h-14 w-14';
+    return (
+      <div className={`${ICON_TIER_GRID_CLASS[iconTier]} relative z-10`}>
+        {Array.from({ length: displayCount }).map((_, i) => (
+          <div key={i} className="flex flex-col items-center gap-2 px-1 py-1">
+            <div className={`${frame} rounded-none animate-pulse`} style={{ background: `${color}22` }} />
+            <div className="h-2 w-10 rounded-none animate-pulse" style={{ background: 'var(--color-bg-tertiary)' }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className={`${config.gridClass} relative z-10`}>
       {Array.from({ length: displayCount }).map((_, i) => (
@@ -1489,48 +1592,6 @@ function CategorySkeleton({ count, color, cardViewMode = 'standard' }: { count: 
   );
 }
 
-// ========== 视图切换按钮组 ==========
-const VIEW_MODES = [
-  { key: 'compact' as const, icon: Grid3X3, titleKey: 'bookmark.view_compact' },
-  { key: 'standard' as const, icon: LayoutGrid, titleKey: 'bookmark.view_standard' },
-  { key: 'comfortable' as const, icon: StretchHorizontal, titleKey: 'bookmark.view_comfortable' },
-];
-
-function ViewModeToggle({
-  cardViewMode,
-  onChange,
-}: {
-  cardViewMode: 'compact' | 'standard' | 'comfortable';
-  onChange: (mode: 'compact' | 'standard' | 'comfortable') => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div
-      className="flex items-center rounded-lg p-0.5 gap-0.5"
-      style={{ background: 'var(--color-bg-tertiary)' }}
-    >
-      {VIEW_MODES.map(({ key, icon: Icon, titleKey }) => (
-        <button
-          key={key}
-          onClick={() => onChange(key)}
-          className={`p-1.5 rounded-md transition-all ${
-            cardViewMode === key
-              ? 'shadow-sm'
-              : 'hover:bg-white/5'
-          }`}
-          style={{
-            background: cardViewMode === key ? 'var(--color-glass)' : 'transparent',
-            color: cardViewMode === key ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-          }}
-          title={t(titleKey, key)}
-        >
-          <Icon className="w-3.5 h-3.5" />
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // ========== 分类区组件（支持折叠展开 + 懒渲染） ==========
 function CategorySection({
   category,
@@ -1543,6 +1604,8 @@ function CategorySection({
   initialShowCount,
   cardViewMode = 'standard',
   iconMode = false,
+  iconTier = 'medium',
+  presentation = null,
   onWallpaper = false,
   onContextMenu,
   onEditCategory,
@@ -1560,6 +1623,8 @@ function CategorySection({
   initialShowCount: number;
   cardViewMode?: 'compact' | 'standard' | 'comfortable';
   iconMode?: boolean;
+  iconTier?: BookmarkIconTier;
+  presentation?: React.ReactNode;
   onWallpaper?: boolean;
   onContextMenu: (e: React.MouseEvent, bookmark: Bookmark) => void;
   onEditCategory: (cat: import("./types/bookmark").Category) => void;
@@ -1569,7 +1634,8 @@ function CategorySection({
 }) {
   const { t } = useTranslation();
   const viewportWidth = useViewportWidth();
-  const pageStep = loadMoreStep(cardViewMode, viewportWidth);
+  const pageStep = iconMode ? loadMoreIconStep(iconTier, viewportWidth) : loadMoreStep(cardViewMode, viewportWidth);
+  void onViewModeChange;
   const baseShowCount = initialShowCount || 8;
   const needsCollapse = collapseThreshold > 0 && categoryBookmarks.length > collapseThreshold;
   const [displayCount, setDisplayCount] = useState(needsCollapse ? baseShowCount : categoryBookmarks.length);
@@ -1616,7 +1682,7 @@ function CategorySection({
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-3 relative z-10">
+      <div className="flex flex-wrap items-center gap-3 mb-3 relative z-10">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-sm"
           style={{ backgroundColor: `${category.color}15`, color: category.color }}
@@ -1639,11 +1705,15 @@ function CategorySection({
             <Edit2 className="w-4 h-4" />
           </button>
         )}
-        {/* 视图切换已迁移到菜单栏 */}
+        {presentation && <div className="ml-auto">{presentation}</div>}
       </div>
 
       <SortableContext items={visibleBookmarks.map(b => b.id)} strategy={rectSortingStrategy}>
-        <div className={`${iconMode ? ICON_GRID_CLASS : VIEW_MODE_CONFIG[cardViewMode].gridClass} relative z-10`} data-icon-grid={iconMode ? 'true' : undefined}>
+        <div
+          className={`${iconMode ? ICON_TIER_GRID_CLASS[iconTier] : VIEW_MODE_CONFIG[cardViewMode].gridClass} relative z-10`}
+          data-icon-grid={iconMode ? 'true' : undefined}
+          data-icon-tier={iconMode ? iconTier : undefined}
+        >
           {doRender ? visibleBookmarks.map((bookmark, index) => (
             <MemoizedBookmarkItem
               key={bookmark.id}
@@ -1655,6 +1725,7 @@ function CategorySection({
               lightweight={lightweight}
               cardViewMode={cardViewMode}
               iconMode={iconMode}
+              iconTier={iconTier}
               onWallpaper={onWallpaper}
               onContextMenu={onContextMenu}
               onTagSelect={onTagSelect}
@@ -1665,7 +1736,13 @@ function CategorySection({
 
       {/* 骨架屏：懒渲染未激活时显示 */}
       {!doRender && (
-        <CategorySkeleton count={categoryBookmarks.length} color={category.color || '#667eea'} cardViewMode={cardViewMode} />
+        <CategorySkeleton
+          count={categoryBookmarks.length}
+          color={category.color || '#667eea'}
+          cardViewMode={cardViewMode}
+          iconMode={iconMode}
+          iconTier={iconTier}
+        />
       )}
 
       {/* 展开/折叠按钮 */}

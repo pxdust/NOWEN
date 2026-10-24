@@ -611,7 +611,7 @@ function DockItem({
                           ? "0 0 6px rgba(34, 211, 238, 0.5)"
                           : "0 0 6px rgba(59, 130, 246, 0.5)",
                       }}
-                      layoutId="activeViewIndicator"
+                      layoutId={`activeViewIndicator-${subItem.id}`}
                       transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     />
                   )}
