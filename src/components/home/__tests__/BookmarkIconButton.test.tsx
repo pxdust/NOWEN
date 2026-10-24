@@ -50,15 +50,23 @@ describe('BookmarkIconButton', () => {
     fireEvent.click(button)
     expect(open).toHaveBeenCalledWith('https://github.com', '_blank', 'noopener,noreferrer')
 
-    const description = screen.getByTestId('bookmark-description')
-    expect(description).toHaveTextContent('代码托管')
-    expect(description.className).toContain('hidden')
+    expect(screen.queryByTestId('bookmark-description')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    expect(button).not.toHaveAttribute('title')
+    expect(button.className).toContain('gap-1')
+    expect(button.className).not.toContain('gap-2')
     const frame = screen.getByTestId('bookmark-icon-frame')
     expect(frame).toHaveAttribute('data-icon-surface', 'plain')
     expect(frame.style.background).toBe('')
     expect(frame.style.border).toBe('')
-    expect(frame.className).toContain('h-14')
+    expect(frame.className).toContain('h-8')
+    expect(frame.className).toContain('w-14')
     expect(frame.querySelector('.bookmark-icon-glyph')).toBeTruthy()
+
+    fireEvent.mouseEnter(button)
+    fireEvent.focus(button)
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    expect(screen.queryByText('代码托管，极简模式不该显示这段')).not.toBeInTheDocument()
   })
 
   it('scales the shared tile for mini and large, and prefers a custom icon url', () => {
@@ -73,7 +81,9 @@ describe('BookmarkIconButton', () => {
 
     const frame = screen.getByTestId('bookmark-icon-frame')
     expect(screen.getByTestId('bookmark-icon')).toHaveAttribute('data-tier', 'mini')
-    expect(frame.className).toContain('h-10')
+    expect(screen.getByTestId('bookmark-icon').className).toContain('gap-1')
+    expect(frame.className).toContain('h-6')
+    expect(frame.className).toContain('w-10')
     expect(frame).toHaveAttribute('data-icon-surface', 'plain')
     expect(frame.style.background).toBe('')
     expect(frame.querySelector('img')).toHaveAttribute('src', 'https://cdn.example/icon.png')
@@ -87,7 +97,9 @@ describe('BookmarkIconButton', () => {
         onContextMenu={() => undefined}
       />,
     )
-    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('h-[4.75rem]')
+    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('h-11')
+    expect(screen.getByTestId('bookmark-icon-frame').className).toContain('w-[4.75rem]')
+    expect(screen.getByTestId('bookmark-icon').className).toContain('gap-1.5')
     expect(screen.getByTestId('bookmark-icon')).toHaveTextContent('GitHub')
     expect(screen.getByTestId('bookmark-icon')).not.toHaveTextContent('代码托管')
 
